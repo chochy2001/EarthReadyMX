@@ -16,13 +16,17 @@ struct ShakeEffect: GeometryEffect {
 }
 
 struct PulseEffect: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @State private var isPulsing = false
 
     func body(content: Content) -> some View {
         content
-            .scaleEffect(isPulsing ? 1.05 : 1.0)
+            .scaleEffect(reduceMotion ? 1.0 : (isPulsing ? 1.05 : 1.0))
+            .opacity(reduceMotion ? (isPulsing ? 1.0 : 0.85) : 1.0)
             .animation(
-                .easeInOut(duration: 1.5).repeatForever(autoreverses: true),
+                reduceMotion
+                    ? .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
+                    : .easeInOut(duration: 1.5).repeatForever(autoreverses: true),
                 value: isPulsing
             )
             .onAppear { isPulsing = true }
@@ -31,16 +35,28 @@ struct PulseEffect: ViewModifier {
 
 struct GlowEffect: ViewModifier {
     let color: Color
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @State private var isGlowing = false
 
     func body(content: Content) -> some View {
         content
-            .shadow(color: color.opacity(isGlowing ? 0.6 : 0.2), radius: isGlowing ? 15 : 5)
+            .shadow(
+                color: color.opacity(
+                    reduceMotion ? 0.4 : (isGlowing ? 0.6 : 0.2)
+                ),
+                radius: reduceMotion ? 10 : (isGlowing ? 15 : 5)
+            )
             .animation(
-                .easeInOut(duration: 2).repeatForever(autoreverses: true),
+                reduceMotion
+                    ? nil
+                    : .easeInOut(duration: 2).repeatForever(autoreverses: true),
                 value: isGlowing
             )
-            .onAppear { isGlowing = true }
+            .onAppear {
+                if !reduceMotion {
+                    isGlowing = true
+                }
+            }
     }
 }
 
