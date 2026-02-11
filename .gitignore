@@ -1,0 +1,12 @@
+# Xcode
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.swiftpm/xcode/package.xcworkspace/xcshareddata/
+.swiftpm/xcode/xcuserdata/
+*.xcuserstate
+xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store
+*.swp
+*~
