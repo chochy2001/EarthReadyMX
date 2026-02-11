@@ -97,6 +97,7 @@ struct SplashView: View {
                         .font(.system(size: 14, weight: .regular, design: .rounded))
                         .foregroundColor(.gray.opacity(0.8))
                         .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 40)
                         .transition(.opacity)
                 }
@@ -299,8 +300,8 @@ struct StatBadge: View {
                     .font(.system(size: isExpanded ? 11 : 9, weight: .medium))
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
-                    .lineLimit(isExpanded ? nil : 1)
-                    .fixedSize(horizontal: false, vertical: isExpanded)
+                    .lineLimit(isExpanded ? nil : 2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, isExpanded ? 16 : 12)
