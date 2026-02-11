@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SimulationView: View {
     @EnvironmentObject var gameState: GameState
+    @EnvironmentObject var hapticManager: HapticManager
     @State private var currentIndex = 0
     @State private var selectedOption: SimulationOption?
     @State private var showExplanation = false
@@ -62,6 +63,7 @@ struct SimulationView: View {
                 }
             }
         }
+        .onAppear { hapticManager.playEarthquakeSimulation() }
     }
 
     private var simulationHeader: some View {
@@ -159,7 +161,10 @@ struct SimulationView: View {
                 showExplanation = true
                 gameState.answerScenario(scenario, correct: option.isCorrect)
             }
-            if !option.isCorrect {
+            if option.isCorrect {
+                hapticManager.playCorrectAnswer()
+            } else {
+                hapticManager.playWrongAnswer()
                 withAnimation(.easeInOut(duration: 0.5)) {
                     shakeAmount = 3
                     intensity = 0.5

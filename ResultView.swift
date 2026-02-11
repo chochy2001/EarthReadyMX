@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ResultView: View {
     @EnvironmentObject var gameState: GameState
+    @EnvironmentObject var hapticManager: HapticManager
     @State private var showScore = false
     @State private var showMessage = false
     @State private var showDetails = false
@@ -214,6 +215,11 @@ struct ResultView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) / Double(steps)) {
                     animatedScore = target * Double(i) / Double(steps)
                 }
+            }
+            if gameState.scorePercentage == 100 {
+                hapticManager.playPerfectScore()
+            } else {
+                hapticManager.playEncouragement()
             }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {

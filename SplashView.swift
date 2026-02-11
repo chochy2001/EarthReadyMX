@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SplashView: View {
     @EnvironmentObject var gameState: GameState
+    @EnvironmentObject var hapticManager: HapticManager
     @State private var shakeAmount: CGFloat = 0
     @State private var showTitle = false
     @State private var showSubtitle = false
@@ -146,6 +147,8 @@ struct SplashView: View {
 
     private func startAnimationSequence() {
         startSeismograph()
+
+        hapticManager.playEarthquakeSplash()
 
         withAnimation(.easeInOut(duration: 0.8)) {
             shakeAmount = 6
