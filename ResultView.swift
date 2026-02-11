@@ -4,6 +4,7 @@ struct ResultView: View {
     @EnvironmentObject var gameState: GameState
     @EnvironmentObject var hapticManager: HapticManager
     @EnvironmentObject var soundManager: SoundManager
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @State private var showScore = false
     @State private var showMessage = false
     @State private var showDetails = false
@@ -20,8 +21,10 @@ struct ResultView: View {
             )
             .ignoresSafeArea()
 
-            if gameState.scorePercentage == 100 {
-                ParticlesView().ignoresSafeArea()
+            if gameState.scorePercentage == 100 && !reduceMotion {
+                ParticlesView()
+                    .ignoresSafeArea()
+                    .accessibilityHidden(true)
             }
 
             ScrollView {
@@ -74,6 +77,9 @@ struct ResultView: View {
         }
         .frame(width: 200, height: 200)
         .padding(10)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Score: \(Int(gameState.scorePercentage)) percent, \(gameState.score) out of \(gameState.totalQuestions) correct")
+        .accessibilityAddTraits(.isImage)
     }
 
     private var messageSection: some View {
@@ -95,6 +101,7 @@ struct ResultView: View {
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityAddTraits(.isHeader)
 
             ForEach(Array(gameState.scenarios.enumerated()), id: \.element.id) { index, scenario in
                 let wasCorrect = gameState.answeredScenarios[scenario.id] ?? false
@@ -116,6 +123,8 @@ struct ResultView: View {
                 .padding(14)
                 .background((wasCorrect ? Color.green : Color.red).opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Scenario \(index + 1): \(wasCorrect ? "Correct" : "Incorrect")")
             }
         }
         .padding(.horizontal, 20)
@@ -127,6 +136,7 @@ struct ResultView: View {
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityAddTraits(.isHeader)
 
             takeawayItem(icon: "arrow.down.to.line", color: .orange,
                          title: "Drop, Cover, Hold On",
@@ -161,6 +171,7 @@ struct ResultView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
+            .accessibilityHint("Double tap to restart the app from the beginning")
 
             Text("Share this app to help others be prepared.")
                 .font(.system(size: 13, weight: .medium, design: .rounded))
@@ -185,6 +196,8 @@ struct ResultView: View {
         .padding(14)
         .background(Color.white.opacity(0.04))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(title). \(text)")
     }
 
     private var scoreTitle: String {
@@ -203,6 +216,25 @@ struct ResultView: View {
     }
 
     private func startAnimationSequence() {
+        if reduceMotion {
+            showScore = true
+            showMessage = true
+            showDetails = true
+            showActions = true
+            ringProgress = gameState.scorePercentage / 100
+            animatedScore = gameState.scorePercentage
+            if gameState.scorePercentage == 100 {
+                hapticManager.playPerfectScore()
+            } else {
+                hapticManager.playEncouragement()
+            }
+            soundManager.playCelebration(scorePercentage: gameState.scorePercentage)
+            AccessibilityAnnouncement.announceScreenChange(
+                "Results. You scored \(Int(gameState.scorePercentage)) percent, \(gameState.score) out of \(gameState.totalQuestions) correct. \(scoreTitle)"
+            )
+            return
+        }
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) { showScore = true }
         }

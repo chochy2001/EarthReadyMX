@@ -80,6 +80,7 @@ struct SimulationView: View {
                     Text("Emergency Simulation")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
+                        .accessibilityAddTraits(.isHeader)
                     Text("Make the right call")
                         .font(.system(size: 14, weight: .medium, design: .rounded))
                         .foregroundColor(.gray)
@@ -101,6 +102,8 @@ struct SimulationView: View {
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Scenario \(currentIndex + 1) of \(gameState.scenarios.count)")
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
@@ -142,6 +145,7 @@ struct SimulationView: View {
                 .foregroundStyle(
                     LinearGradient(colors: [.orange, .red], startPoint: .top, endPoint: .bottom)
                 )
+                .accessibilityHidden(true)
             Text(scenario.situation)
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .foregroundColor(.white)
@@ -158,6 +162,9 @@ struct SimulationView: View {
                         .stroke(Color.orange.opacity(0.2), lineWidth: 1)
                 )
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityLabel("Emergency scenario: \(scenario.situation)")
     }
 
     private func optionButton(_ option: SimulationOption, scenario: SimulationScenario) -> some View {
@@ -216,6 +223,20 @@ struct SimulationView: View {
         }
         .buttonStyle(.plain)
         .disabled(selectedOption != nil)
+        .accessibilityLabel(option.text)
+        .accessibilityValue(optionAccessibilityValue(option))
+        .accessibilityHint(selectedOption == nil ? "Double tap to select this answer" : "")
+    }
+
+    private func optionAccessibilityValue(_ option: SimulationOption) -> String {
+        guard let selected = selectedOption else { return "" }
+        if option.id == selected.id {
+            return option.isCorrect ? "Your answer, correct" : "Your answer, incorrect"
+        }
+        if option.isCorrect {
+            return "Correct answer"
+        }
+        return ""
     }
 
     private func explanationCard(_ scenario: SimulationScenario) -> some View {
@@ -240,6 +261,8 @@ struct SimulationView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.yellow.opacity(0.2), lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Explanation: \(scenario.explanation)")
     }
 
     private var continueButton: some View {
@@ -270,6 +293,11 @@ struct SimulationView: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 14))
         }
+        .accessibilityHint(
+            currentIndex + 1 < gameState.scenarios.count
+                ? "Double tap to go to the next scenario"
+                : "Double tap to see your final results"
+        )
     }
 
     // MARK: - Color Helpers
