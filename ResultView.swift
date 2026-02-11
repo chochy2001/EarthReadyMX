@@ -155,20 +155,38 @@ struct ResultView: View {
         VStack(spacing: 12) {
             Button(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    gameState.reset()
+                    gameState.currentPhase = .checklist
                 }
             }) {
                 HStack(spacing: 8) {
-                    Image(systemName: "arrow.counterclockwise")
-                    Text("Start Over")
+                    Image(systemName: "checklist")
+                    Text("Prepare Now")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                 }
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
-                    LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
+                    LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing)
                 )
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .accessibilityHint("Double tap to open your earthquake preparedness checklist")
+
+            Button(action: {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    gameState.reset()
+                }
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.counterclockwise")
+                    Text("Start Over")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                }
+                .foregroundColor(.white.opacity(0.7))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.white.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .accessibilityHint("Double tap to restart the app from the beginning")

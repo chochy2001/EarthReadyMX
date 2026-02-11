@@ -29,6 +29,12 @@ struct ContentView: View {
                         insertion: .scale.combined(with: .opacity),
                         removal: .opacity
                     ))
+            case .checklist:
+                ChecklistView()
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
             }
         }
         .animation(.easeInOut(duration: 0.6), value: gameState.currentPhase)

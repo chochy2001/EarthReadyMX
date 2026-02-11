@@ -5,6 +5,58 @@ enum AppPhase: Equatable, Sendable {
     case learn
     case simulation
     case result
+    case checklist
+}
+
+// MARK: - Checklist Models
+
+enum ChecklistPriority: Int, CaseIterable, Sendable {
+    case critical = 0
+    case important = 1
+    case recommended = 2
+
+    var label: String {
+        switch self {
+        case .critical: return "Critical"
+        case .important: return "Important"
+        case .recommended: return "Recommended"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .critical: return .red
+        case .important: return .orange
+        case .recommended: return .blue
+        }
+    }
+}
+
+struct ChecklistItem: Identifiable, Sendable {
+    let id = UUID()
+    let icon: String
+    let title: String
+    let description: String
+    let priority: ChecklistPriority
+    var isCompleted: Bool = false
+}
+
+struct ChecklistCategory: Identifiable, Sendable {
+    let id = UUID()
+    let icon: String
+    let title: String
+    let subtitle: String
+    let color: Color
+    let gradientColors: [Color]
+    var items: [ChecklistItem]
+
+    var completedCount: Int { items.filter(\.isCompleted).count }
+    var totalCount: Int { items.count }
+    var progress: Double {
+        guard totalCount > 0 else { return 0 }
+        return Double(completedCount) / Double(totalCount)
+    }
+    var isComplete: Bool { completedCount == totalCount }
 }
 
 enum EarthquakePhase: String, CaseIterable, Sendable {
@@ -42,6 +94,7 @@ class GameState: ObservableObject {
     @Published var answeredScenarios: [UUID: Bool] = [:]
     @Published var currentLearnPhase: EarthquakePhase = .before
     @Published var learnPhasesCompleted: Set<EarthquakePhase> = []
+    @Published var checklistCategories: [ChecklistCategory] = ChecklistData.allCategories()
 
     let safetyTips: [SafetyTip] = [
         SafetyTip(
@@ -190,11 +243,56 @@ class GameState: ObservableObject {
         answeredScenarios = [:]
         currentLearnPhase = .before
         learnPhasesCompleted = []
+        checklistCategories = ChecklistData.allCategories()
     }
 
     var scorePercentage: Double {
         guard totalQuestions > 0 else { return 0 }
         return Double(score) / Double(totalQuestions) * 100
+    }
+
+    // MARK: - Checklist
+
+    var totalChecklistItems: Int {
+        checklistCategories.reduce(0) { $0 + $1.totalCount }
+    }
+
+    var completedChecklistItems: Int {
+        checklistCategories.reduce(0) { $0 + $1.completedCount }
+    }
+
+    var checklistProgress: Double {
+        guard totalChecklistItems > 0 else { return 0 }
+        return Double(completedChecklistItems) / Double(totalChecklistItems)
+    }
+
+    var checklistPercentage: Int {
+        Int(checklistProgress * 100)
+    }
+
+    func toggleChecklistItem(categoryId: UUID, itemId: UUID) {
+        guard let catIndex = checklistCategories.firstIndex(where: { $0.id == categoryId }),
+              let itemIndex = checklistCategories[catIndex].items.firstIndex(where: { $0.id == itemId }) else {
+            return
+        }
+        checklistCategories[catIndex].items[itemIndex].isCompleted.toggle()
+    }
+
+    var checklistMotivationalMessage: String {
+        let pct = checklistPercentage
+        if pct == 0 {
+            return "Every journey starts with a single step. Begin preparing today."
+        } else if pct < 25 {
+            return "Great start! You're taking the first steps to protect your family."
+        } else if pct < 50 {
+            return "You're making real progress. Keep going!"
+        } else if pct < 75 {
+            return "Over halfway there! Your preparedness level is impressive."
+        } else if pct < 100 {
+            return "Almost there! You're among the most prepared people."
+        } else {
+            return "Outstanding! You and your family are fully prepared."
+        }
     }
 
     var scoreMessage: String {
