@@ -3,6 +3,7 @@ import SwiftUI
 struct ResultView: View {
     @EnvironmentObject var gameState: GameState
     @EnvironmentObject var hapticManager: HapticManager
+    @EnvironmentObject var soundManager: SoundManager
     @State private var showScore = false
     @State private var showMessage = false
     @State private var showDetails = false
@@ -221,6 +222,7 @@ struct ResultView: View {
             } else {
                 hapticManager.playEncouragement()
             }
+            soundManager.playCelebration(scorePercentage: gameState.scorePercentage)
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { showMessage = true }
