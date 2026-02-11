@@ -4,6 +4,7 @@ struct SplashView: View {
     @EnvironmentObject var gameState: GameState
     @EnvironmentObject var hapticManager: HapticManager
     @EnvironmentObject var soundManager: SoundManager
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @State private var shakeAmount: CGFloat = 0
     @State private var showTitle = false
     @State private var showSubtitle = false
@@ -32,6 +33,7 @@ struct SplashView: View {
                     .stroke(Color.orange.opacity(0.3), lineWidth: 1.5)
                     .ignoresSafeArea()
             }
+            .accessibilityHidden(true)
 
             VStack(spacing: 24) {
                 Spacer()
@@ -39,6 +41,13 @@ struct SplashView: View {
                 SeismographView(points: seismographPoints, isActive: isShaking)
                     .frame(height: 80)
                     .padding(.horizontal, 30)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(
+                        isShaking
+                            ? "Seismograph showing active earthquake waves"
+                            : "Seismograph showing calm readings"
+                    )
+                    .accessibilityAddTraits(.isImage)
 
                 ZStack {
                     Circle()
@@ -52,6 +61,7 @@ struct SplashView: View {
                         )
                         .frame(width: 160, height: 160)
                         .glowEffect(color: .orange)
+                        .accessibilityHidden(true)
 
                     Image(systemName: "globe.americas.fill")
                         .font(.system(size: 70))
@@ -62,8 +72,11 @@ struct SplashView: View {
                                 endPoint: .bottom
                             )
                         )
-                        .modifier(ShakeEffect(animatableData: shakeAmount))
+                        .modifier(ShakeEffect(animatableData: reduceMotion ? 0 : shakeAmount))
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("EarthReady app icon, a globe representing the Americas")
+                .accessibilityAddTraits(.isImage)
 
                 if showTitle {
                     VStack(spacing: 8) {
@@ -134,6 +147,8 @@ struct SplashView: View {
                     .padding(.horizontal, 40)
                     .pulseEffect()
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .accessibilityLabel("Start Learning")
+                    .accessibilityHint("Double tap to begin learning earthquake safety protocols")
                 }
 
                 Spacer().frame(height: 40)
@@ -148,6 +163,19 @@ struct SplashView: View {
     }
 
     private func startAnimationSequence() {
+        if reduceMotion {
+            showTitle = true
+            showStats = true
+            showSubtitle = true
+            showButton = true
+            startSeismograph()
+            hapticManager.playEarthquakeSplash()
+            AccessibilityAnnouncement.announceScreenChange(
+                "EarthReady. Earthquake preparedness app. Tap Start Learning to begin."
+            )
+            return
+        }
+
         startSeismograph()
 
         hapticManager.playEarthquakeSplash()
@@ -289,6 +317,11 @@ struct StatBadge: View {
     let icon: String
     @State private var isExpanded = false
 
+    private var accessibilityDescription: String {
+        let cleanLabel = label.replacingOccurrences(of: "\n", with: " ")
+        return "\(value) \(cleanLabel)"
+    }
+
     var body: some View {
         Button(action: {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -320,5 +353,9 @@ struct StatBadge: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityDescription)
+        .accessibilityHint("Double tap to \(isExpanded ? "collapse" : "expand") details")
+        .accessibilityAddTraits(.isButton)
     }
 }

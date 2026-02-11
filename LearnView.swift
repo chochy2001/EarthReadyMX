@@ -46,6 +46,7 @@ struct LearnView: View {
                 Text("Safety Protocol")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
+                    .accessibilityAddTraits(.isHeader)
                 Text("Tap each card to learn more")
                     .font(.system(size: 14, weight: .medium, design: .rounded))
                     .foregroundColor(.gray)
@@ -54,6 +55,7 @@ struct LearnView: View {
             Image(systemName: "shield.lefthalf.filled")
                 .font(.system(size: 30))
                 .foregroundColor(.orange)
+                .accessibilityHidden(true)
         }
         .padding(.horizontal, 20)
         .padding(.top, 16)
@@ -99,6 +101,10 @@ struct LearnView: View {
                             )
                     )
                 }
+                .accessibilityLabel("\(phase.rawValue) phase")
+                .accessibilityValue(selectedPhase == phase ? "Selected" : "Not selected")
+                .accessibilityHint("Double tap to view \(phase.rawValue.lowercased()) earthquake tips")
+                .accessibilityAddTraits(selectedPhase == phase ? [.isSelected] : [])
             }
         }
         .padding(.horizontal, 20)
@@ -117,10 +123,14 @@ struct LearnView: View {
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(gameState.learnPhasesCompleted.contains(phase) ? .green : .gray)
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(phase.rawValue) phase")
+                    .accessibilityValue(gameState.learnPhasesCompleted.contains(phase) ? "Completed" : "Not completed")
                 }
                 Spacer()
             }
             .padding(.horizontal, 20)
+            .accessibilityLabel("Progress: \(gameState.learnPhasesCompleted.count) of 3 phases completed")
 
             HStack(spacing: 12) {
                 Button(action: {
@@ -150,6 +160,12 @@ struct LearnView: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
+                .accessibilityValue(gameState.learnPhasesCompleted.contains(selectedPhase) ? "Completed" : "Not completed")
+                .accessibilityHint(
+                    gameState.learnPhasesCompleted.contains(selectedPhase)
+                        ? "This phase is already completed"
+                        : "Double tap to mark \(selectedPhase.rawValue) phase as read"
+                )
 
                 if gameState.learnPhasesCompleted.count == 3 {
                     Button(action: {
@@ -171,6 +187,7 @@ struct LearnView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                     .transition(.scale.combined(with: .opacity))
+                    .accessibilityHint("Double tap to start the earthquake simulation quiz")
                 }
             }
             .padding(.horizontal, 20)
@@ -217,6 +234,7 @@ struct TipCard: View {
                             .font(.system(size: 18))
                             .foregroundColor(colorFor(phase: tip.phase))
                     }
+                    .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(tip.title)
@@ -235,6 +253,7 @@ struct TipCard: View {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.caption)
                         .foregroundColor(.gray)
+                        .accessibilityHidden(true)
                 }
                 .padding(16)
 
@@ -258,6 +277,10 @@ struct TipCard: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(tip.title). \(isExpanded ? tip.description : "")")
+        .accessibilityHint(isExpanded ? "Double tap to collapse" : "Double tap to expand and read details")
+        .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
     }
 
     private func colorFor(phase: EarthquakePhase) -> Color {
