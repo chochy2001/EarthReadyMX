@@ -225,11 +225,15 @@ extension SoundManager {
         modulationTimer?.invalidate()
         var modulationTime: Float = 0
         modulationTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] timer in
-            guard let self = self, self.isPlaying else {
+            guard let self = self else {
                 timer.invalidate()
                 return
             }
             Task { @MainActor in
+                guard self.isPlaying else {
+                    timer.invalidate()
+                    return
+                }
                 modulationTime += 0.05
                 // LFO for sub-bass frequency (25-45 Hz)
                 let lfo = sin(modulationTime * 0.3 * 2 * .pi)
@@ -404,11 +408,15 @@ extension SoundManager {
         modulationTimer?.invalidate()
         var time: Float = 0
         modulationTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] timer in
-            guard let self = self, self.isPlaying else {
+            guard let self = self else {
                 timer.invalidate()
                 return
             }
             Task { @MainActor in
+                guard self.isPlaying else {
+                    timer.invalidate()
+                    return
+                }
                 time += 0.05
                 let detune1 = sin(time * 0.1 * 2 * .pi) * 2
                 let detune2 = sin(time * 0.13 * 2 * .pi) * 1.5

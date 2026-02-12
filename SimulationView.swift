@@ -9,6 +9,10 @@ struct SimulationView: View {
     @State private var showExplanation = false
     @State private var shakeAmount: CGFloat = 0
     @State private var intensity: Double = 0
+    @State private var timeRemaining: Double = 15
+    @State private var timerActive = false
+    @State private var countdownTimer: Timer?
+    @State private var sceneShaking = true
 
     private var currentScenario: SimulationScenario? {
         guard currentIndex < gameState.scenarios.count else { return nil }
@@ -32,8 +36,18 @@ struct SimulationView: View {
 
                 if let scenario = currentScenario {
                     ScrollView {
-                        VStack(spacing: 16) {
+                        VStack(spacing: 12) {
                             if !showExplanation {
+                                SceneIllustration(
+                                    scenarioIndex: currentIndex,
+                                    isShaking: sceneShaking && selectedOption == nil
+                                )
+                                .modifier(ShakeEffect(
+                                    amount: sceneShaking && selectedOption == nil ? 3 : 0,
+                                    animatableData: shakeAmount
+                                ))
+                                .padding(.horizontal, 20)
+
                                 scenarioCard(scenario)
                                     .modifier(ShakeEffect(
                                         amount: selectedOption != nil && selectedOption?.isCorrect == false ? 8 : 0,
@@ -48,7 +62,7 @@ struct SimulationView: View {
                             }
                         }
                         .padding(.horizontal, 20)
-                        .padding(.top, 12)
+                        .padding(.top, 8)
                     }
 
                     if showExplanation {
@@ -67,9 +81,11 @@ struct SimulationView: View {
         .onAppear {
             hapticManager.playEarthquakeSimulation()
             soundManager.playEarthquakeRumble()
+            startTimer()
         }
         .onDisappear {
             soundManager.stopEarthquakeRumble()
+            stopTimer()
         }
     }
 
@@ -116,6 +132,9 @@ struct SimulationView: View {
                     .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundColor(.red.opacity(0.7))
                 Spacer()
+                if selectedOption == nil {
+                    CountdownTimerView(timeRemaining: timeRemaining, totalTime: 15)
+                }
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
@@ -170,6 +189,7 @@ struct SimulationView: View {
     private func optionButton(_ option: SimulationOption, scenario: SimulationScenario) -> some View {
         Button(action: {
             guard selectedOption == nil else { return }
+            stopTimer()
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 selectedOption = option
                 showExplanation = true
@@ -274,7 +294,9 @@ struct SimulationView: View {
                     showExplanation = false
                     shakeAmount = 0
                 }
+                startTimer()
             } else {
+                stopTimer()
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.currentPhase = .result
                 }
@@ -298,6 +320,52 @@ struct SimulationView: View {
                 ? "Double tap to go to the next scenario"
                 : "Double tap to see your final results"
         )
+    }
+
+    // MARK: - Timer Logic
+
+    private func startTimer() {
+        timeRemaining = 15
+        timerActive = true
+        countdownTimer?.invalidate()
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            Task { @MainActor in
+                guard timerActive else { return }
+                if timeRemaining > 0 {
+                    timeRemaining -= 0.1
+                } else {
+                    handleTimeout()
+                }
+            }
+        }
+    }
+
+    private func stopTimer() {
+        timerActive = false
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+    }
+
+    private func handleTimeout() {
+        guard selectedOption == nil, let scenario = currentScenario else { return }
+        stopTimer()
+        // Auto-select wrong — time ran out
+        if let correctOption = scenario.options.first(where: { $0.isCorrect }) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                selectedOption = correctOption
+                showExplanation = true
+                gameState.answerScenario(scenario, correct: false)
+            }
+            hapticManager.playWrongAnswer()
+            soundManager.playIncorrectSound()
+            withAnimation(.easeInOut(duration: 0.5)) {
+                shakeAmount = 3
+                intensity = 0.5
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                withAnimation { intensity = 0 }
+            }
+        }
     }
 
     // MARK: - Color Helpers
