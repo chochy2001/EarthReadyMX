@@ -120,7 +120,7 @@ struct KitBuilderView: View {
                                 }
                             }
 
-                            if bagContents.count >= 5 {
+                            if essentialsFound == totalEssentials || bagContents.count >= items.count {
                                 completeButton
                                     .padding(.horizontal, 16)
                             }
@@ -144,16 +144,16 @@ struct KitBuilderView: View {
 
                 if feedbackItem != nil {
                     VStack {
-                        Spacer()
                         FeedbackToast(
                             item: feedbackItem,
                             isCorrect: feedbackIsCorrect,
                             differentiateWithoutColor: differentiateWithoutColor
                         )
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 180)
+                        .padding(.top, 80)
+                        Spacer()
                     }
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .transition(.move(edge: .top).combined(with: .opacity))
                     .allowsHitTesting(false)
                 }
             }
@@ -723,7 +723,11 @@ private struct FeedbackToast: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill((isCorrect ? Color.green : Color.red).opacity(0.15))
+                    .fill(Color(white: 0.1).opacity(0.9))
+            )
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill((isCorrect ? Color.green : Color.red).opacity(0.25))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14)

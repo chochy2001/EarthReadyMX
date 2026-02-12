@@ -8,5 +8,7 @@
 	<string>Dark</string>
 	<key>NSMotionUsageDescription</key>
 	<string>EarthReady uses motion data to create an interactive seismograph that responds to real device movement.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>EarthReady uses the camera to analyze your room for earthquake safety hazards and provide personalized recommendations.</string>
 </dict>
 </plist>
