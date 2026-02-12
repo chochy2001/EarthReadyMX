@@ -510,13 +510,14 @@ struct StoryView: View {
 
         // Typewriter effect
         var charIndex = 0
-        typewriterTimer = Timer.scheduledTimer(withTimeInterval: 0.04, repeats: true) { [self] timer in
-            Task { @MainActor in
+        typewriterTimer = Timer.scheduledTimer(withTimeInterval: 0.04, repeats: true) { _ in
+            Task { @MainActor [self] in
                 if charIndex < fullTypewriterText.count {
                     charIndex += 1
                     typewriterText = String(fullTypewriterText.prefix(charIndex))
                 } else {
-                    timer.invalidate()
+                    self.typewriterTimer?.invalidate()
+                    self.typewriterTimer = nil
                 }
             }
         }
