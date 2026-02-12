@@ -6,6 +6,11 @@
 xcuserdata/
 DerivedData/
 
+# SPM build artifacts
+.build/
+.swiftpm/configuration/
+.swiftpm/xcode/
+
 # macOS
 .DS_Store
 *.swp
