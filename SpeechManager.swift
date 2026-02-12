@@ -16,7 +16,7 @@ final class SpeechManager: NSObject, ObservableObject {
 
     func speak(
         text: String,
-        language: String = "es-MX",
+        language: String = "en-US",
         rate: Float = 0.48,
         onFinished: (() -> Void)? = nil
     ) {

@@ -348,6 +348,7 @@ struct StatBadge: View {
     let label: String
     let icon: String
     @State private var isExpanded = false
+    @EnvironmentObject var hapticManager: HapticManager
 
     private var accessibilityDescription: String {
         let cleanLabel = label.replacingOccurrences(of: "\n", with: " ")
@@ -356,6 +357,7 @@ struct StatBadge: View {
 
     var body: some View {
         Button(action: {
+            hapticManager.playEncouragement()
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                 isExpanded.toggle()
             }

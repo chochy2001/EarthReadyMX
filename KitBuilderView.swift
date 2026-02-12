@@ -1,5 +1,14 @@
 import SwiftUI
 
+// MARK: - Bag Frame Preference Key
+
+private struct BagFramePreferenceKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
+    }
+}
+
 // MARK: - Kit Builder View
 
 struct KitBuilderView: View {
@@ -42,41 +51,93 @@ struct KitBuilderView: View {
                 } else if showResults {
                     resultsOverlay
                 } else {
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            headerSection
-
-                            LazyVGrid(columns: columns, spacing: 14) {
-                                ForEach(items) { item in
-                                    DraggableKitItem(
-                                        item: item,
-                                        isInBag: bagContents.contains(item.id),
-                                        bagFrame: $bagFrame,
-                                        wrongItemShake: $wrongItemShake,
-                                        reduceMotion: reduceMotion,
-                                        differentiateWithoutColor: differentiateWithoutColor,
-                                        onDrop: { handleDrop(item: item) }
-                                    )
+                    VStack(spacing: 0) {
+                        // Back button
+                        HStack {
+                            Button(action: {
+                                withAnimation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.7)) {
+                                    gameState.currentPhase = .result
                                 }
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "chevron.left")
+                                    Text("Back")
+                                }
+                                .font(.system(.body, design: .rounded, weight: .medium))
+                                .foregroundColor(.orange)
                             }
-                            .padding(.horizontal, 16)
+                            .accessibilityLabel("Back")
+                            .accessibilityHint("Return to results screen")
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
 
+                        // TOP: Scrollable items
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                headerSection
+
+                                LazyVGrid(columns: columns, spacing: 14) {
+                                    ForEach(items) { item in
+                                        DraggableKitItem(
+                                            item: item,
+                                            isInBag: bagContents.contains(item.id),
+                                            bagFrame: $bagFrame,
+                                            wrongItemShake: $wrongItemShake,
+                                            reduceMotion: reduceMotion,
+                                            differentiateWithoutColor: differentiateWithoutColor,
+                                            onDrop: { handleDrop(item: item) }
+                                        )
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+
+                                Spacer().frame(height: 8)
+                            }
+                            .frame(maxWidth: 700)
+                            .frame(maxWidth: .infinity)
+                        }
+
+                        // BOTTOM: Backpack drop target (FIXED, always visible)
+                        VStack(spacing: 12) {
                             BackpackDropTarget(
                                 itemCount: bagContents.count,
-                                bagFrame: $bagFrame,
                                 reduceMotion: reduceMotion
                             )
                             .padding(.horizontal, 16)
+                            .background(
+                                GeometryReader { bagGeometry in
+                                    Color.clear
+                                        .preference(
+                                            key: BagFramePreferenceKey.self,
+                                            value: bagGeometry.frame(in: .global)
+                                        )
+                                }
+                            )
+                            .onPreferenceChange(BagFramePreferenceKey.self) { frame in
+                                bagFrame = frame
+                            }
 
                             if bagContents.count >= 5 {
                                 completeButton
                                     .padding(.horizontal, 16)
                             }
-
-                            Spacer().frame(height: 40)
                         }
-                        .frame(maxWidth: 700)
-                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.05, green: 0.05, blue: 0.12).opacity(0),
+                                    Color(red: 0.05, green: 0.05, blue: 0.12)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 20)
+                            .offset(y: -20),
+                            alignment: .top
+                        )
                     }
                 }
 
@@ -89,7 +150,7 @@ struct KitBuilderView: View {
                             differentiateWithoutColor: differentiateWithoutColor
                         )
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 100)
+                        .padding(.bottom, 180)
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .allowsHitTesting(false)
@@ -591,19 +652,18 @@ private struct DraggableKitItem: View {
 
 private struct BackpackDropTarget: View {
     let itemCount: Int
-    @Binding var bagFrame: CGRect
     let reduceMotion: Bool
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.orange.opacity(0.08))
+                .fill(Color.orange.opacity(0.12))
 
             RoundedRectangle(cornerRadius: 20)
                 .strokeBorder(
-                    style: StrokeStyle(lineWidth: 2, dash: [8, 6])
+                    style: StrokeStyle(lineWidth: 2.5, dash: [8, 6])
                 )
-                .foregroundColor(.orange.opacity(0.4))
+                .foregroundColor(.orange.opacity(0.5))
 
             VStack(spacing: 8) {
                 ZStack {
@@ -631,22 +691,11 @@ private struct BackpackDropTarget: View {
 
                 Text("Drop items here")
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
-                    .foregroundColor(.orange.opacity(0.7))
+                    .foregroundColor(.orange.opacity(0.8))
             }
         }
         .frame(height: 120)
         .modifier(GlowEffect(color: .orange))
-        .background(
-            GeometryReader { geometry in
-                Color.clear
-                    .onAppear {
-                        bagFrame = geometry.frame(in: .global)
-                    }
-                    .onChange(of: geometry.size) { _ in
-                        bagFrame = geometry.frame(in: .global)
-                    }
-            }
-        )
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Backpack drop zone")
         .accessibilityValue("\(itemCount) items in backpack")

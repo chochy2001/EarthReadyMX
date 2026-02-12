@@ -62,34 +62,34 @@ enum DrillPhase: Int, CaseIterable, Sendable {
     var instruction: String {
         switch self {
         case .briefing:
-            return "Simulacro de sismo. Prepara tu cuerpo y mente. Identifica el lugar seguro más cercano."
+            return "Earthquake drill. Prepare your body and mind. Identify the nearest safe spot."
         case .alert:
-            return "Alerta sísmica activada. Tienes segundos para actuar. Dirígete al punto seguro más cercano."
+            return "Seismic alert activated. You have seconds to act. Move to the nearest safe spot."
         case .drop:
-            return "Agáchate. Ponte de rodillas en el suelo para evitar caer durante el temblor."
+            return "Drop! Get on your knees to avoid falling during the earthquake."
         case .cover:
-            return "Cúbrete. Protege tu cabeza y cuello. Métete debajo de una mesa resistente."
+            return "Cover! Protect your head and neck. Get under a sturdy table."
         case .holdOn:
-            return "Sujétate. Agarra firmemente la mesa o lo que te cubra. No te sueltes."
+            return "Hold on! Grip the table firmly. Do not let go."
         case .shakingStops:
-            return "El movimiento ha cesado. Mantén la calma. No te levantes aún."
+            return "The shaking has stopped. Stay calm. Do not stand up yet."
         case .check:
-            return "Revisa si hay peligros. Verifica fugas de gas, cables caídos y daños estructurales."
+            return "Check for hazards. Look for gas leaks, downed wires, and structural damage."
         case .evacuate:
-            return "Evacúa con calma por la ruta más segura. No uses elevadores. Ayuda a otros si puedes."
+            return "Evacuate calmly using the safest route. Do not use elevators. Help others if you can."
         case .rallyPoint:
-            return "Dirígete al punto de reunión. Confirma que todos estén presentes y a salvo."
+            return "Head to the rally point. Confirm everyone is present and safe."
         case .complete:
-            return "Simulacro completado con éxito. Recuerda practicar regularmente."
+            return "Drill completed successfully. Remember to practice regularly."
         }
     }
 
     var holdOnSecondInstruction: String {
-        "Mantén tu posición. El sismo continúa. Protege tu cabeza."
+        "Hold your position. The earthquake continues. Protect your head."
     }
 
     var holdOnThirdInstruction: String {
-        "Sigue sujetándote. Falta poco para que termine."
+        "Keep holding on. It will be over soon."
     }
 
     var duration: TimeInterval {
@@ -210,6 +210,27 @@ struct DrillView: View {
 
     private var countdownView: some View {
         VStack(spacing: 24) {
+            HStack {
+                Button(action: {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        cleanupDrill()
+                        gameState.currentPhase = .result
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
+                    }
+                    .font(.system(.body, design: .rounded, weight: .medium))
+                    .foregroundColor(.orange)
+                }
+                .accessibilityLabel("Back")
+                .accessibilityHint("Return to results screen")
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+
             Spacer()
 
             Text("Get Ready")

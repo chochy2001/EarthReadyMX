@@ -43,5 +43,5 @@ let package = Package(
             exclude: ["docs", "README.md", "~", "SupportingInfo.plist"]
         )
     ],
-    swiftLanguageVersions: [.version("6")]
+    swiftLanguageModes: [.v6]
 )
