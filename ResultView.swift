@@ -5,6 +5,7 @@ struct ResultView: View {
     @EnvironmentObject var hapticManager: HapticManager
     @EnvironmentObject var soundManager: SoundManager
     @Environment(\.accessibilityReduceMotion) var reduceMotion
+    @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
     @State private var showScore = false
     @State private var showMessage = false
     @State private var showDetails = false
@@ -68,10 +69,11 @@ struct ResultView: View {
                 .rotationEffect(.degrees(-90))
             VStack(spacing: 4) {
                 Text("\(Int(animatedScore))%")
-                    .font(.system(size: 48, weight: .black, design: .rounded))
+                    .font(.system(.largeTitle, design: .rounded, weight: .black))
+                    .minimumScaleFactor(0.5)
                     .foregroundColor(.white)
                 Text("\(gameState.score)/\(gameState.totalQuestions)")
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .font(.system(.callout, design: .rounded, weight: .medium))
                     .foregroundColor(.gray)
             }
         }
@@ -85,10 +87,10 @@ struct ResultView: View {
     private var messageSection: some View {
         VStack(spacing: 8) {
             Text(scoreTitle)
-                .font(.system(size: 26, weight: .bold, design: .rounded))
+                .font(.system(.title2, design: .rounded, weight: .bold))
                 .foregroundColor(scoreColors.first ?? .white)
             Text(gameState.scoreMessage)
-                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .font(.system(.subheadline, design: .rounded))
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
@@ -98,7 +100,7 @@ struct ResultView: View {
     private var responsesSection: some View {
         VStack(spacing: 12) {
             Text("Your Responses")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(.system(.body, design: .rounded, weight: .bold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityAddTraits(.isHeader)
@@ -108,21 +110,39 @@ struct ResultView: View {
                 HStack(spacing: 12) {
                     Image(systemName: wasCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundColor(wasCorrect ? .green : .red)
-                        .font(.system(size: 20))
+                        .font(.system(.title3))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Scenario \(index + 1)")
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .font(.system(.footnote, design: .rounded, weight: .semibold))
                             .foregroundColor(.white)
                         Text(String(scenario.situation.prefix(60)) + "...")
-                            .font(.system(size: 12, weight: .regular))
+                            .font(.system(.caption))
                             .foregroundColor(.gray)
                             .lineLimit(2)
                     }
                     Spacer()
+                    if differentiateWithoutColor {
+                        Text(wasCorrect ? "CORRECT" : "WRONG")
+                            .font(.system(.caption2, design: .rounded, weight: .bold))
+                            .foregroundColor(wasCorrect ? .green : .red)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background((wasCorrect ? Color.green : Color.red).opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
                 }
                 .padding(14)
                 .background((wasCorrect ? Color.green : Color.red).opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            (wasCorrect ? Color.green : Color.red).opacity(differentiateWithoutColor ? 0.3 : 0),
+                            style: wasCorrect
+                                ? StrokeStyle(lineWidth: 1.5)
+                                : StrokeStyle(lineWidth: 1.5, dash: [5, 3])
+                        )
+                )
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Scenario \(index + 1): \(wasCorrect ? "Correct" : "Incorrect")")
             }
@@ -133,7 +153,7 @@ struct ResultView: View {
     private var takeawaysSection: some View {
         VStack(spacing: 12) {
             Text("Key Takeaways")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(.system(.body, design: .rounded, weight: .bold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityAddTraits(.isHeader)
@@ -161,7 +181,7 @@ struct ResultView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "checklist")
                     Text("Prepare Now")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.system(.callout, design: .rounded, weight: .bold))
                 }
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
@@ -181,7 +201,7 @@ struct ResultView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "arrow.counterclockwise")
                     Text("Start Over")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.system(.footnote, design: .rounded, weight: .semibold))
                 }
                 .foregroundColor(.white.opacity(0.7))
                 .frame(maxWidth: .infinity)
@@ -191,10 +211,18 @@ struct ResultView: View {
             }
             .accessibilityHint("Double tap to restart the app from the beginning")
 
-            Text("Share this app to help others be prepared.")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
+            ShareLink(item: "Learn earthquake safety with EarthReady. Be prepared when the ground shakes. #EarthReady") {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text("Share EarthReady")
+                }
+                .font(.system(.footnote, design: .rounded, weight: .semibold))
+                .foregroundColor(.orange)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.orange.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
         }
         .padding(.horizontal, 20)
     }
@@ -203,11 +231,11 @@ struct ResultView: View {
         HStack(spacing: 14) {
             ZStack {
                 Circle().fill(color.opacity(0.15)).frame(width: 40, height: 40)
-                Image(systemName: icon).font(.system(size: 16)).foregroundColor(color)
+                Image(systemName: icon).font(.system(.callout)).foregroundColor(color)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundColor(.white)
-                Text(text).font(.system(size: 12, weight: .regular)).foregroundColor(.gray)
+                Text(title).font(.system(.footnote, design: .rounded, weight: .semibold)).foregroundColor(.white)
+                Text(text).font(.system(.caption)).foregroundColor(.gray)
             }
             Spacer()
         }
@@ -292,34 +320,37 @@ struct ParticlesView: View {
     @State private var particles: [Particle] = []
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            Canvas { context, size in
-                for particle in particles {
-                    let age = timeline.date.timeIntervalSince(particle.created)
-                    let progress = age / particle.lifetime
-                    guard progress < 1 else { continue }
+        GeometryReader { geometry in
+            TimelineView(.animation) { timeline in
+                Canvas { context, size in
+                    for particle in particles {
+                        let age = timeline.date.timeIntervalSince(particle.created)
+                        let progress = age / particle.lifetime
+                        guard progress < 1 else { continue }
 
-                    let x = particle.startX + particle.velocityX * age
-                    let y = particle.startY + particle.velocityY * age + 50 * age * age
-                    let opacity = 1 - progress
-                    let pSize = particle.size * (1 - progress * 0.5)
+                        let x = particle.startX + particle.velocityX * age
+                        let y = particle.startY + particle.velocityY * age + 50 * age * age
+                        let opacity = 1 - progress
+                        let pSize = particle.size * (1 - progress * 0.5)
 
-                    context.opacity = opacity
-                    context.fill(
-                        Circle().path(in: CGRect(x: x - pSize / 2, y: y - pSize / 2, width: pSize, height: pSize)),
-                        with: .color(particle.color)
-                    )
+                        context.opacity = opacity
+                        context.fill(
+                            Circle().path(in: CGRect(x: x - pSize / 2, y: y - pSize / 2, width: pSize, height: pSize)),
+                            with: .color(particle.color)
+                        )
+                    }
                 }
             }
+            .onAppear { generateParticles(width: geometry.size.width) }
         }
-        .onAppear { generateParticles() }
     }
 
-    private func generateParticles() {
+    private func generateParticles(width: CGFloat) {
+        let actualWidth = max(width, 300)
         let colors: [Color] = [.orange, .yellow, .green, .cyan, .white]
         for _ in 0..<40 {
             particles.append(Particle(
-                startX: CGFloat.random(in: 0...400),
+                startX: CGFloat.random(in: 0...actualWidth),
                 startY: -20,
                 velocityX: CGFloat.random(in: -30...30),
                 velocityY: CGFloat.random(in: 20...80),

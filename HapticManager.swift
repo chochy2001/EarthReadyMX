@@ -74,6 +74,8 @@ final class HapticManager: ObservableObject {
 
 extension HapticManager {
 
+    /// Haptic pattern mimicking real earthquake wave structure:
+    /// P-wave (0-0.8s), S-wave (0.8-1.8s), and decay (1.8-2.2s).
     func playEarthquakeSplash() {
         guard supportsHaptics else { return }
 
@@ -246,6 +248,7 @@ extension HapticManager {
 
 extension HapticManager {
 
+    /// 4-second background rumble with aftershock jolts at 0.8s, 1.7s, and 2.9s.
     func playEarthquakeSimulation() {
         guard supportsHaptics else { return }
 

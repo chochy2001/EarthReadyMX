@@ -14,8 +14,10 @@ struct SplashView: View {
     @State private var seismographPoints: [CGFloat] = Array(repeating: 0, count: 60)
     @State private var isShaking = false
     @State private var seismographTimer: Timer?
+    @State private var viewSize: CGSize = .zero
 
     var body: some View {
+        GeometryReader { geometry in
         ZStack {
             LinearGradient(
                 colors: [
@@ -81,7 +83,7 @@ struct SplashView: View {
                 if showTitle {
                     VStack(spacing: 8) {
                         Text("EarthReady")
-                            .font(.system(size: 42, weight: .black, design: .rounded))
+                            .font(.system(.largeTitle, design: .rounded, weight: .black))
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [.white, .orange.opacity(0.8)],
@@ -90,7 +92,7 @@ struct SplashView: View {
                                 )
                             )
                         Text("Know What To Do When The Ground Shakes")
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .font(.system(.subheadline, design: .rounded, weight: .medium))
                             .foregroundColor(.gray)
                             .multilineTextAlignment(.center)
                     }
@@ -109,7 +111,7 @@ struct SplashView: View {
 
                 if showSubtitle {
                     Text("In 2017, a 7.1 magnitude earthquake struck Mexico City.\n250+ lives were lost. Preparedness makes the difference.")
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .font(.system(.footnote, design: .rounded))
                         .foregroundColor(.gray.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -129,7 +131,7 @@ struct SplashView: View {
                             Image(systemName: "shield.checkered")
                                 .font(.title3)
                             Text("Start Learning")
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .font(.system(.body, design: .rounded, weight: .bold))
                         }
                         .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
@@ -154,12 +156,16 @@ struct SplashView: View {
                 Spacer().frame(height: 40)
             }
         }
-        .onAppear { startAnimationSequence() }
+        .onAppear {
+            viewSize = geometry.size
+            startAnimationSequence()
+        }
         .onDisappear {
             seismographTimer?.invalidate()
             seismographTimer = nil
             soundManager.stop()
         }
+        } // GeometryReader
     }
 
     private func startAnimationSequence() {
@@ -221,8 +227,8 @@ struct SplashView: View {
     }
 
     private func generateCracks() {
-        let screenWidth: CGFloat = 400
-        let screenHeight: CGFloat = 800
+        let screenWidth = max(viewSize.width, 300)
+        let screenHeight = max(viewSize.height, 600)
         for _ in 0..<5 {
             let start = CGPoint(
                 x: CGFloat.random(in: 0...screenWidth),
@@ -333,10 +339,12 @@ struct StatBadge: View {
                     .font(.caption)
                     .foregroundColor(.orange)
                 Text(value)
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(.callout, design: .rounded, weight: .bold))
+                    .minimumScaleFactor(0.7)
                     .foregroundColor(.white)
                 Text(label)
-                    .font(.system(size: isExpanded ? 11 : 9, weight: .medium))
+                    .font(.system(.caption2, weight: .medium))
+                    .minimumScaleFactor(0.6)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
                     .lineLimit(isExpanded ? nil : 2)

@@ -11,6 +11,9 @@ private struct OscillatorControl: Sendable {
     var isActive: Bool = false
 }
 
+/// Audio oscillator bank using raw UnsafeMutablePointers for the real-time
+/// render callback. Raw pointers eliminate ARC retain/release on the audio
+/// thread, preventing priority inversion and glitches.
 private final class OscillatorBank: @unchecked Sendable {
     let count = 4
 
@@ -64,6 +67,10 @@ private final class OscillatorBank: @unchecked Sendable {
 // the runtime would inject a dispatch_assert_queue(mainQueue) check that crashes
 // on the real-time audio thread (AURemoteIO::IOThread).
 
+/// Creates the AVAudioSourceNode outside of any @MainActor context.
+/// Swift 6 inherits actor isolation to closures created within @MainActor
+/// classes, which would inject a main-thread assertion into the real-time
+/// audio callback and crash. This free function breaks that inheritance.
 private func makeAudioSourceNode(
     format: AVAudioFormat,
     controlsPtr: UnsafeMutablePointer<OscillatorControl>,

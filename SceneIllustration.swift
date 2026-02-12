@@ -484,6 +484,7 @@ struct SceneIllustration: View {
 struct CountdownTimerView: View {
     let timeRemaining: Double
     let totalTime: Double
+    @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
 
     private var progress: Double {
         guard totalTime > 0 else { return 0 }
@@ -494,6 +495,12 @@ struct CountdownTimerView: View {
         if progress > 0.5 { return .green }
         if progress > 0.25 { return .yellow }
         return .red
+    }
+
+    private var urgencyIcon: String {
+        if progress > 0.5 { return "timer" }
+        if progress > 0.25 { return "exclamationmark.circle" }
+        return "exclamationmark.triangle.fill"
     }
 
     var body: some View {
@@ -507,12 +514,13 @@ struct CountdownTimerView: View {
                     .stroke(urgencyColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                     .frame(width: 32, height: 32)
                     .rotationEffect(.degrees(-90))
-                Image(systemName: "timer")
-                    .font(.system(size: 12))
+                Image(systemName: differentiateWithoutColor ? urgencyIcon : "timer")
+                    .font(.system(.caption))
                     .foregroundColor(urgencyColor)
             }
             Text("\(Int(timeRemaining))s")
-                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .font(.system(.footnote, design: .rounded, weight: .bold))
+                .minimumScaleFactor(0.7)
                 .foregroundColor(urgencyColor)
                 .monospacedDigit()
         }

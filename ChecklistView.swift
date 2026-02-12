@@ -3,6 +3,7 @@ import SwiftUI
 struct ChecklistView: View {
     @EnvironmentObject var gameState: GameState
     @EnvironmentObject var hapticManager: HapticManager
+    @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
     @State private var selectedCategory: ChecklistCategory?
 
     var body: some View {
@@ -64,16 +65,17 @@ struct ChecklistView: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("My Preparedness")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(.title2, design: .rounded, weight: .bold))
                     .foregroundColor(.white)
                     .accessibilityAddTraits(.isHeader)
                 Text("Based on FEMA & CENAPRED guidelines")
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.system(.footnote, design: .rounded, weight: .medium))
                     .foregroundColor(.gray)
             }
             Spacer()
             Text("\(gameState.checklistPercentage)%")
-                .font(.system(size: 20, weight: .black, design: .rounded))
+                .font(.system(.title3, design: .rounded, weight: .black))
+                .minimumScaleFactor(0.7)
                 .foregroundColor(gameState.checklistPercentage == 100 ? .green : .orange)
         }
         .padding(.horizontal, 20)
@@ -105,10 +107,11 @@ struct ChecklistView: View {
 
                 VStack(spacing: 2) {
                     Text("\(gameState.completedChecklistItems)")
-                        .font(.system(size: 32, weight: .black, design: .rounded))
+                        .font(.system(.title, design: .rounded, weight: .black))
+                        .minimumScaleFactor(0.5)
                         .foregroundColor(.white)
                     Text("of \(gameState.totalChecklistItems)")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.system(.footnote, design: .rounded, weight: .medium))
                         .foregroundColor(.gray)
                 }
             }
@@ -117,7 +120,7 @@ struct ChecklistView: View {
             .accessibilityLabel("\(gameState.completedChecklistItems) of \(gameState.totalChecklistItems) items completed, \(gameState.checklistPercentage) percent")
 
             Text(gameState.checklistMotivationalMessage)
-                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .font(.system(.footnote, design: .rounded, weight: .medium))
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 20)
@@ -132,7 +135,7 @@ struct ChecklistView: View {
                 .font(.caption)
                 .foregroundColor(.green.opacity(0.6))
             Text("Data from FEMA Ready.gov & CENAPRED Mexico")
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(.system(.caption2, design: .rounded, weight: .medium))
                 .foregroundColor(.gray.opacity(0.6))
         }
     }
@@ -148,7 +151,7 @@ struct ChecklistView: View {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.counterclockwise")
                 Text("Start Over")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.system(.footnote, design: .rounded, weight: .semibold))
             }
             .foregroundColor(.white.opacity(0.5))
             .frame(maxWidth: .infinity)
@@ -172,9 +175,9 @@ struct ChecklistView: View {
                 }) {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(.footnote, weight: .semibold))
                         Text("Back")
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .font(.system(.callout, design: .rounded, weight: .medium))
                     }
                     .foregroundColor(.orange)
                 }
@@ -183,7 +186,7 @@ struct ChecklistView: View {
                 Spacer()
 
                 Text("\(currentCategory.completedCount)/\(currentCategory.totalCount)")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(.callout, design: .rounded, weight: .bold))
                     .foregroundColor(currentCategory.isComplete ? .green : .white)
             }
             .padding(.horizontal, 20)
@@ -202,18 +205,18 @@ struct ChecklistView: View {
                         )
                         .frame(width: 44, height: 44)
                     Image(systemName: currentCategory.icon)
-                        .font(.system(size: 18))
+                        .font(.system(.body))
                         .foregroundColor(currentCategory.color)
                 }
                 .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(currentCategory.title)
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .font(.system(.title3, design: .rounded, weight: .bold))
                         .foregroundColor(.white)
                         .accessibilityAddTraits(.isHeader)
                     Text(currentCategory.subtitle)
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .font(.system(.footnote, design: .rounded, weight: .medium))
                         .foregroundColor(.gray)
                 }
                 Spacer()
@@ -260,13 +263,20 @@ struct ChecklistView: View {
         }
     }
 
+    @ViewBuilder
     private func prioritySectionHeader(_ priority: ChecklistPriority) -> some View {
         HStack(spacing: 6) {
-            Circle()
-                .fill(priority.color.opacity(0.3))
-                .frame(width: 8, height: 8)
+            if differentiateWithoutColor {
+                Image(systemName: priority.icon)
+                    .font(.system(.caption2))
+                    .foregroundColor(priority.color.opacity(0.8))
+            } else {
+                Circle()
+                    .fill(priority.color.opacity(0.3))
+                    .frame(width: 8, height: 8)
+            }
             Text(priority.label.uppercased())
-                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .font(.system(.caption2, design: .rounded, weight: .bold))
                 .foregroundColor(priority.color.opacity(0.8))
                 .tracking(1)
             Spacer()
@@ -297,16 +307,16 @@ struct CategoryCard: View {
                             )
                             .frame(width: 48, height: 48)
                         Image(systemName: category.icon)
-                            .font(.system(size: 20))
+                            .font(.system(.title3))
                             .foregroundColor(category.color)
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(category.title)
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.system(.callout, design: .rounded, weight: .bold))
                             .foregroundColor(.white)
                         Text(category.subtitle)
-                            .font(.system(size: 12, weight: .regular))
+                            .font(.system(.caption))
                             .foregroundColor(.gray)
                     }
 
@@ -314,7 +324,7 @@ struct CategoryCard: View {
 
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("\(category.completedCount)/\(category.totalCount)")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .font(.system(.footnote, design: .rounded, weight: .bold))
                             .foregroundColor(category.isComplete ? .green : .white)
                         if category.isComplete {
                             Image(systemName: "checkmark.seal.fill")
@@ -364,7 +374,7 @@ struct ChecklistItemRow: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Image(systemName: item.icon)
-                            .font(.system(size: 12))
+                            .font(.system(.caption))
                             .foregroundColor(item.isCompleted ? categoryColor.opacity(0.5) : categoryColor)
                         Text(item.title)
                             .font(.system(size: 14, weight: .semibold, design: .rounded))

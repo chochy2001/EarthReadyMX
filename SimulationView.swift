@@ -4,6 +4,7 @@ struct SimulationView: View {
     @EnvironmentObject var gameState: GameState
     @EnvironmentObject var hapticManager: HapticManager
     @EnvironmentObject var soundManager: SoundManager
+    @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
     @State private var currentIndex = 0
     @State private var selectedOption: SimulationOption?
     @State private var showExplanation = false
@@ -13,10 +14,15 @@ struct SimulationView: View {
     @State private var timerActive = false
     @State private var countdownTimer: Timer?
     @State private var sceneShaking = true
+    @State private var timedOut = false
 
     private var currentScenario: SimulationScenario? {
         guard currentIndex < gameState.scenarios.count else { return nil }
         return gameState.scenarios[currentIndex]
+    }
+
+    private var answerGiven: Bool {
+        selectedOption != nil || timedOut
     }
 
     var body: some View {
@@ -94,11 +100,11 @@ struct SimulationView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Emergency Simulation")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .font(.system(.title2, design: .rounded, weight: .bold))
                         .foregroundColor(.white)
                         .accessibilityAddTraits(.isHeader)
                     Text("Make the right call")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.system(.footnote, design: .rounded, weight: .medium))
                         .foregroundColor(.gray)
                 }
                 Spacer()
@@ -115,7 +121,8 @@ struct SimulationView: View {
                         .frame(width: 50, height: 50)
                         .rotationEffect(.degrees(-90))
                     Text("\(currentIndex + 1)/\(gameState.scenarios.count)")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .font(.system(.caption, design: .rounded, weight: .bold))
+                        .minimumScaleFactor(0.7)
                         .foregroundColor(.white)
                 }
                 .accessibilityElement(children: .ignore)
@@ -126,13 +133,13 @@ struct SimulationView: View {
 
             HStack(spacing: 16) {
                 Label("\(gameState.score) correct", systemImage: "checkmark.circle.fill")
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.system(.caption, design: .rounded, weight: .medium))
                     .foregroundColor(.green)
                 Label("\(gameState.totalQuestions - gameState.score) wrong", systemImage: "xmark.circle.fill")
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.system(.caption, design: .rounded, weight: .medium))
                     .foregroundColor(.red.opacity(0.7))
                 Spacer()
-                if selectedOption == nil {
+                if selectedOption == nil && !timedOut {
                     CountdownTimerView(timeRemaining: timeRemaining, totalTime: 15)
                 }
             }
@@ -144,10 +151,10 @@ struct SimulationView: View {
     private func compactScenarioCard(_ scenario: SimulationScenario) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 18))
+                .font(.system(.body))
                 .foregroundColor(.orange)
             Text(scenario.situation)
-                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .font(.system(.footnote, design: .rounded, weight: .medium))
                 .foregroundColor(.white.opacity(0.7))
                 .lineLimit(2)
         }
@@ -160,13 +167,13 @@ struct SimulationView: View {
     private func scenarioCard(_ scenario: SimulationScenario) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 36))
+                .font(.system(.largeTitle))
                 .foregroundStyle(
                     LinearGradient(colors: [.orange, .red], startPoint: .top, endPoint: .bottom)
                 )
                 .accessibilityHidden(true)
             Text(scenario.situation)
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .font(.system(.headline, design: .rounded))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
@@ -215,40 +222,79 @@ struct SimulationView: View {
                     Circle()
                         .fill(optionCircleColor(option))
                         .frame(width: 32, height: 32)
-                    if let selected = selectedOption {
+                    if timedOut {
+                        if option.isCorrect {
+                            Image(systemName: "checkmark")
+                                .font(.system(.footnote, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    } else if let selected = selectedOption {
                         if option.id == selected.id {
                             Image(systemName: option.isCorrect ? "checkmark" : "xmark")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.system(.footnote, weight: .bold))
                                 .foregroundColor(.white)
                         } else if option.isCorrect {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.system(.footnote, weight: .bold))
                                 .foregroundColor(.white)
+                        } else if differentiateWithoutColor {
+                            Image(systemName: "minus")
+                                .font(.system(.footnote, weight: .bold))
+                                .foregroundColor(.white.opacity(0.4))
                         }
                     }
                 }
                 Text(option.text)
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(optionTextColor(option))
                     .multilineTextAlignment(.leading)
-                Spacer()
+                if differentiateWithoutColor && answerGiven {
+                    Spacer()
+                    if option.isCorrect {
+                        Text("CORRECT")
+                            .font(.system(.caption2, design: .rounded, weight: .bold))
+                            .foregroundColor(.green)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.green.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                    } else if let selected = selectedOption, option.id == selected.id, !option.isCorrect {
+                        Text("WRONG")
+                            .font(.system(.caption2, design: .rounded, weight: .bold))
+                            .foregroundColor(.red)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.red.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
+                } else {
+                    Spacer()
+                }
             }
             .padding(16)
             .background(optionBackground(option))
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(optionBorderColor(option), lineWidth: 1)
+                    .stroke(
+                        optionBorderColor(option),
+                        style: timedOut && !option.isCorrect
+                            ? StrokeStyle(lineWidth: 2, dash: [5, 3])
+                            : StrokeStyle(lineWidth: 1)
+                    )
             )
         }
         .buttonStyle(.plain)
-        .disabled(selectedOption != nil)
+        .disabled(selectedOption != nil || timedOut)
         .accessibilityLabel(option.text)
         .accessibilityValue(optionAccessibilityValue(option))
-        .accessibilityHint(selectedOption == nil ? "Double tap to select this answer" : "")
+        .accessibilityHint(selectedOption == nil && !timedOut ? "Double tap to select this answer" : "")
     }
 
     private func optionAccessibilityValue(_ option: SimulationOption) -> String {
+        if timedOut {
+            return option.isCorrect ? "Correct answer" : ""
+        }
         guard let selected = selectedOption else { return "" }
         if option.id == selected.id {
             return option.isCorrect ? "Your answer, correct" : "Your answer, incorrect"
@@ -261,28 +307,39 @@ struct SimulationView: View {
 
     private func explanationCard(_ scenario: SimulationScenario) -> some View {
         VStack(alignment: .leading, spacing: 10) {
+            if timedOut {
+                HStack(spacing: 8) {
+                    Image(systemName: "clock.badge.exclamationmark")
+                        .foregroundColor(.red)
+                    Text("Time's Up!")
+                        .font(.system(.callout, design: .rounded, weight: .bold))
+                        .foregroundColor(.red)
+                }
+            }
             HStack(spacing: 8) {
                 Image(systemName: "lightbulb.fill")
                     .foregroundColor(.yellow)
                 Text("Why?")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(.callout, design: .rounded, weight: .bold))
                     .foregroundColor(.white)
             }
             Text(scenario.explanation)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.system(.footnote, design: .rounded))
                 .foregroundColor(.white.opacity(0.85))
                 .lineSpacing(3)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.yellow.opacity(0.08))
+        .background(timedOut ? Color.red.opacity(0.08) : Color.yellow.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.yellow.opacity(0.2), lineWidth: 1)
+                .stroke(timedOut ? Color.red.opacity(0.2) : Color.yellow.opacity(0.2), lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Explanation: \(scenario.explanation)")
+        .accessibilityLabel(timedOut
+            ? "Time's up. Explanation: \(scenario.explanation)"
+            : "Explanation: \(scenario.explanation)")
     }
 
     private var continueButton: some View {
@@ -293,6 +350,7 @@ struct SimulationView: View {
                     selectedOption = nil
                     showExplanation = false
                     shakeAmount = 0
+                    timedOut = false
                 }
                 startTimer()
             } else {
@@ -304,7 +362,7 @@ struct SimulationView: View {
         }) {
             HStack(spacing: 8) {
                 Text(currentIndex + 1 < gameState.scenarios.count ? "Next Scenario" : "See Results")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(.callout, design: .rounded, weight: .bold))
                 Image(systemName: currentIndex + 1 < gameState.scenarios.count ? "arrow.right" : "chart.bar.fill")
             }
             .foregroundColor(.black)
@@ -349,28 +407,29 @@ struct SimulationView: View {
     private func handleTimeout() {
         guard selectedOption == nil, let scenario = currentScenario else { return }
         stopTimer()
-        // Auto-select wrong — time ran out
-        if let correctOption = scenario.options.first(where: { $0.isCorrect }) {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                selectedOption = correctOption
-                showExplanation = true
-                gameState.answerScenario(scenario, correct: false)
-            }
-            hapticManager.playWrongAnswer()
-            soundManager.playIncorrectSound()
-            withAnimation(.easeInOut(duration: 0.5)) {
-                shakeAmount = 3
-                intensity = 0.5
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                withAnimation { intensity = 0 }
-            }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            timedOut = true
+            showExplanation = true
+            gameState.answerScenario(scenario, correct: false)
+        }
+        hapticManager.playWrongAnswer()
+        soundManager.playIncorrectSound()
+        withAnimation(.easeInOut(duration: 0.5)) {
+            shakeAmount = 3
+            intensity = 0.5
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation { intensity = 0 }
         }
     }
 
     // MARK: - Color Helpers
 
     private func optionCircleColor(_ option: SimulationOption) -> Color {
+        if timedOut {
+            if option.isCorrect { return .green }
+            return Color.white.opacity(0.05)
+        }
         guard let selected = selectedOption else { return Color.white.opacity(0.1) }
         if option.isCorrect { return .green }
         if option.id == selected.id && !option.isCorrect { return .red }
@@ -378,6 +437,10 @@ struct SimulationView: View {
     }
 
     private func optionTextColor(_ option: SimulationOption) -> Color {
+        if timedOut {
+            if option.isCorrect { return .green }
+            return .white.opacity(0.3)
+        }
         guard let selected = selectedOption else { return .white }
         if option.isCorrect { return .green }
         if option.id == selected.id && !option.isCorrect { return .red }
@@ -385,6 +448,10 @@ struct SimulationView: View {
     }
 
     private func optionBackground(_ option: SimulationOption) -> Color {
+        if timedOut {
+            if option.isCorrect { return Color.green.opacity(0.1) }
+            return Color.white.opacity(0.03)
+        }
         guard let selected = selectedOption else { return Color.white.opacity(0.06) }
         if option.isCorrect { return Color.green.opacity(0.1) }
         if option.id == selected.id && !option.isCorrect { return Color.red.opacity(0.1) }
@@ -392,6 +459,10 @@ struct SimulationView: View {
     }
 
     private func optionBorderColor(_ option: SimulationOption) -> Color {
+        if timedOut {
+            if option.isCorrect { return Color.green.opacity(0.4) }
+            return Color.white.opacity(0.04)
+        }
         guard let selected = selectedOption else { return Color.white.opacity(0.08) }
         if option.isCorrect { return Color.green.opacity(0.4) }
         if option.id == selected.id && !option.isCorrect { return Color.red.opacity(0.4) }

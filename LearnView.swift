@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LearnView: View {
     @EnvironmentObject var gameState: GameState
+    @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
     @State private var selectedPhase: EarthquakePhase = .before
     @State private var expandedTipId: UUID?
 
@@ -44,16 +45,16 @@ struct LearnView: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Safety Protocol")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(.title, design: .rounded, weight: .bold))
                     .foregroundColor(.white)
                     .accessibilityAddTraits(.isHeader)
                 Text("Tap each card to learn more")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.system(.footnote, design: .rounded, weight: .medium))
                     .foregroundColor(.gray)
             }
             Spacer()
             Image(systemName: "shield.lefthalf.filled")
-                .font(.system(size: 30))
+                .font(.system(.title))
                 .foregroundColor(.orange)
                 .accessibilityHidden(true)
         }
@@ -74,7 +75,8 @@ struct LearnView: View {
                         Image(systemName: iconFor(phase: phase))
                             .font(.caption)
                         Text(phase.rawValue)
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .font(.system(.footnote, design: .rounded, weight: .semibold))
+                            .minimumScaleFactor(0.8)
                     }
                     .foregroundColor(selectedPhase == phase ? .black : .white.opacity(0.7))
                     .frame(maxWidth: .infinity)
@@ -120,8 +122,10 @@ struct LearnView: View {
                             .font(.caption)
                             .foregroundColor(gameState.learnPhasesCompleted.contains(phase) ? .green : .gray)
                         Text(phase.rawValue)
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(.caption, weight: .medium))
                             .foregroundColor(gameState.learnPhasesCompleted.contains(phase) ? .green : .gray)
+                            .bold(differentiateWithoutColor && gameState.learnPhasesCompleted.contains(phase))
+                            .strikethrough(differentiateWithoutColor && gameState.learnPhasesCompleted.contains(phase))
                     }
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("\(phase.rawValue) phase")
@@ -148,7 +152,7 @@ struct LearnView: View {
                         Image(systemName: gameState.learnPhasesCompleted.contains(selectedPhase)
                               ? "checkmark.circle.fill" : "checkmark.circle")
                         Text(gameState.learnPhasesCompleted.contains(selectedPhase) ? "Completed" : "Mark as Read")
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .font(.system(.footnote, design: .rounded, weight: .semibold))
                     }
                     .foregroundColor(gameState.learnPhasesCompleted.contains(selectedPhase) ? .green : .white)
                     .frame(maxWidth: .infinity)
@@ -175,7 +179,7 @@ struct LearnView: View {
                     }) {
                         HStack(spacing: 8) {
                             Text("Test Yourself")
-                                .font(.system(size: 14, weight: .bold, design: .rounded))
+                                .font(.system(.footnote, design: .rounded, weight: .bold))
                             Image(systemName: "arrow.right")
                         }
                         .foregroundColor(.black)
@@ -231,18 +235,18 @@ struct TipCard: View {
                             .fill(colorFor(phase: tip.phase).opacity(0.15))
                             .frame(width: 44, height: 44)
                         Image(systemName: tip.icon)
-                            .font(.system(size: 18))
+                            .font(.system(.body))
                             .foregroundColor(colorFor(phase: tip.phase))
                     }
                     .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(tip.title)
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .font(.system(.callout, design: .rounded, weight: .semibold))
                             .foregroundColor(.white)
                         if !isExpanded {
                             Text(tip.description.prefix(50) + "...")
-                                .font(.system(size: 12, weight: .regular))
+                                .font(.system(.caption))
                                 .foregroundColor(.gray)
                                 .lineLimit(1)
                         }
@@ -259,7 +263,7 @@ struct TipCard: View {
 
                 if isExpanded {
                     Text(tip.description)
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .font(.system(.footnote, design: .rounded))
                         .foregroundColor(.white.opacity(0.85))
                         .padding(.horizontal, 16)
                         .padding(.bottom, 16)

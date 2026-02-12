@@ -30,6 +30,14 @@ enum ChecklistPriority: Int, CaseIterable, Sendable {
         case .recommended: return .blue
         }
     }
+
+    var icon: String {
+        switch self {
+        case .critical: return "exclamationmark.triangle.fill"
+        case .important: return "exclamationmark.circle.fill"
+        case .recommended: return "info.circle.fill"
+        }
+    }
 }
 
 struct ChecklistItem: Identifiable, Sendable {
@@ -94,6 +102,56 @@ class GameState: ObservableObject {
     @Published var answeredScenarios: [UUID: Bool] = [:]
     @Published var learnPhasesCompleted: Set<EarthquakePhase> = []
     @Published var checklistCategories: [ChecklistCategory] = ChecklistData.allCategories()
+
+    // MARK: - Persistence
+    private static let checklistKey = "checklist_completed_items"
+    private static let bestScoreKey = "best_quiz_score"
+
+    init() {
+        loadChecklistState()
+    }
+
+    private func stableKey(categoryTitle: String, itemTitle: String) -> String {
+        "\(categoryTitle)::\(itemTitle)"
+    }
+
+    func saveChecklistState() {
+        var completedKeys: [String] = []
+        for category in checklistCategories {
+            for item in category.items where item.isCompleted {
+                completedKeys.append(stableKey(categoryTitle: category.title, itemTitle: item.title))
+            }
+        }
+        UserDefaults.standard.set(completedKeys, forKey: Self.checklistKey)
+    }
+
+    func loadChecklistState() {
+        guard let completedKeys = UserDefaults.standard.stringArray(forKey: Self.checklistKey) else { return }
+        let completedSet = Set(completedKeys)
+        for catIndex in checklistCategories.indices {
+            for itemIndex in checklistCategories[catIndex].items.indices {
+                let key = stableKey(
+                    categoryTitle: checklistCategories[catIndex].title,
+                    itemTitle: checklistCategories[catIndex].items[itemIndex].title
+                )
+                if completedSet.contains(key) {
+                    checklistCategories[catIndex].items[itemIndex].isCompleted = true
+                }
+            }
+        }
+    }
+
+    func saveBestScoreIfNeeded() {
+        let currentBest = UserDefaults.standard.integer(forKey: Self.bestScoreKey)
+        let currentPercentage = Int(scorePercentage)
+        if currentPercentage > currentBest {
+            UserDefaults.standard.set(currentPercentage, forKey: Self.bestScoreKey)
+        }
+    }
+
+    var bestScore: Int {
+        UserDefaults.standard.integer(forKey: Self.bestScoreKey)
+    }
 
     let safetyTips: [SafetyTip] = [
         SafetyTip(
@@ -233,6 +291,9 @@ class GameState: ObservableObject {
         if correct {
             score += 1
         }
+        if answeredScenarios.count == scenarios.count {
+            saveBestScoreIfNeeded()
+        }
     }
 
     func reset() {
@@ -242,6 +303,7 @@ class GameState: ObservableObject {
         answeredScenarios = [:]
         learnPhasesCompleted = []
         checklistCategories = ChecklistData.allCategories()
+        UserDefaults.standard.removeObject(forKey: Self.checklistKey)
     }
 
     var scorePercentage: Double {
@@ -274,6 +336,7 @@ class GameState: ObservableObject {
             return
         }
         checklistCategories[catIndex].items[itemIndex].isCompleted.toggle()
+        saveChecklistState()
     }
 
     var checklistMotivationalMessage: String {
