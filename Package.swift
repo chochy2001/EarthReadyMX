@@ -20,8 +20,8 @@ let package = Package(
             teamIdentifier: "W5D74488VP",
             displayVersion: "1.0",
             bundleVersion: "1",
-            appIcon: .placeholder(icon: .calendar),
-            accentColor: .presetColor(.blue),
+            appIcon: .asset("AppIcon"),
+            accentColor: .presetColor(.orange),
             supportedDeviceFamilies: [
                 .pad,
                 .phone
@@ -32,7 +32,7 @@ let package = Package(
                 .landscapeLeft,
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
             ],
-            appCategory: .reference
+            appCategory: .education
         )
     ],
     targets: [
