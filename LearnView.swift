@@ -177,26 +177,51 @@ struct LearnView: View {
                 )
 
                 if gameState.learnPhasesCompleted.count == 3 {
-                    Button(action: {
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                            gameState.currentPhase = .simulation
+                    if gameState.score > 0 {
+                        // User already completed quiz, continue to next activity
+                        Button(action: {
+                            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                gameState.currentPhase = .checklist
+                            }
+                        }) {
+                            HStack(spacing: 8) {
+                                Text("Continue")
+                                    .font(.system(.footnote, design: .rounded, weight: .bold))
+                                Image(systemName: "arrow.right")
+                            }
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
-                    }) {
-                        HStack(spacing: 8) {
-                            Text("Test Yourself")
-                                .font(.system(.footnote, design: .rounded, weight: .bold))
-                            Image(systemName: "arrow.right")
+                        .transition(.scale.combined(with: .opacity))
+                        .accessibilityHint("Double tap to continue to the preparedness checklist")
+                    } else {
+                        // User hasn't taken quiz yet
+                        Button(action: {
+                            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                gameState.currentPhase = .simulation
+                            }
+                        }) {
+                            HStack(spacing: 8) {
+                                Text("Test Yourself")
+                                    .font(.system(.footnote, design: .rounded, weight: .bold))
+                                Image(systemName: "arrow.right")
+                            }
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(
-                            LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .transition(.scale.combined(with: .opacity))
+                        .accessibilityHint("Double tap to start the earthquake simulation quiz")
                     }
-                    .transition(.scale.combined(with: .opacity))
-                    .accessibilityHint("Double tap to start the earthquake simulation quiz")
                 }
             }
             .padding(.horizontal, 20)

@@ -52,6 +52,11 @@ struct ChecklistView: View {
                     sourceAttribution
                         .padding(.top, 8)
 
+                    if gameState.checklistPercentage == 100 {
+                        imReadyButton
+                            .padding(.top, 8)
+                    }
+
                     practiceDrillButton
                         .padding(.top, 8)
 
@@ -174,6 +179,35 @@ struct ChecklistView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .accessibilityHint("Double tap to start a guided earthquake drill with voice instructions")
+    }
+
+    // MARK: - I'm Ready Button
+
+    private var imReadyButton: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                gameState.currentPhase = .completion
+            }
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.shield.fill")
+                Text("I'm Ready!")
+                    .font(.system(.callout, design: .rounded, weight: .bold))
+            }
+            .foregroundColor(.black)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(
+                LinearGradient(
+                    colors: [.green, .mint],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .pulseEffect()
+        .accessibilityHint("Double tap to complete EarthReady and see your achievement")
     }
 
     // MARK: - Start Over Button

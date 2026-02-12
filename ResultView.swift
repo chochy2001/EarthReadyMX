@@ -176,6 +176,28 @@ struct ResultView: View {
 
     private var actionsSection: some View {
         VStack(spacing: 12) {
+            // Primary: Learn Safety Protocols
+            Button(action: {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    gameState.currentPhase = .learn
+                }
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "shield.lefthalf.filled")
+                    Text("Learn Safety Protocols")
+                        .font(.system(.callout, design: .rounded, weight: .bold))
+                }
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .accessibilityHint("Double tap to learn earthquake safety protocols")
+
+            // Secondary: Build Your Kit
             Button(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.currentPhase = .kitBuilder
@@ -190,32 +212,13 @@ struct ResultView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
-                    LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
+                    LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .accessibilityHint("Double tap to build your emergency kit by dragging items into a backpack")
 
-            Button(action: {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    gameState.currentPhase = .checklist
-                }
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "checklist")
-                    Text("Prepare Now")
-                        .font(.system(.callout, design: .rounded, weight: .bold))
-                }
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-            }
-            .accessibilityHint("Double tap to open your earthquake preparedness checklist")
-
+            // Secondary: Practice Drill
             Button(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.currentPhase = .drill
@@ -236,14 +239,15 @@ struct ResultView: View {
             }
             .accessibilityHint("Double tap to start a guided earthquake drill with voice instructions")
 
+            // Tertiary: Go to Checklist
             Button(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    gameState.resetQuiz()
+                    gameState.currentPhase = .checklist
                 }
             }) {
                 HStack(spacing: 8) {
-                    Image(systemName: "arrow.counterclockwise")
-                    Text("Start Over")
+                    Image(systemName: "checklist")
+                    Text("Go to Checklist")
                         .font(.system(.footnote, design: .rounded, weight: .semibold))
                 }
                 .foregroundColor(.white.opacity(0.7))
@@ -252,21 +256,27 @@ struct ResultView: View {
                 .background(Color.white.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .accessibilityHint("Double tap to restart the app from the beginning")
+            .accessibilityHint("Double tap to open your earthquake preparedness checklist")
 
-            ShareLink(item: "Learn earthquake safety with EarthReady. Be prepared when the ground shakes. #EarthReady") {
-                HStack(spacing: 8) {
-                    Image(systemName: "square.and.arrow.up")
-                    Text("Share EarthReady")
+            // Start Over
+            Button(action: {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    gameState.resetQuiz()
+                    gameState.currentPhase = .splash
                 }
-                .font(.system(.footnote, design: .rounded, weight: .semibold))
-                .foregroundColor(.orange)
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.counterclockwise")
+                    Text("Start Over")
+                        .font(.system(.footnote, design: .rounded, weight: .semibold))
+                }
+                .foregroundColor(.white.opacity(0.5))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Color.orange.opacity(0.1))
+                .background(Color.white.opacity(0.05))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .accessibilityHint("Double tap to share EarthReady with others")
+            .accessibilityHint("Double tap to restart the app from the beginning")
         }
         .padding(.horizontal, 20)
     }

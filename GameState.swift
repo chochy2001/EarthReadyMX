@@ -2,12 +2,14 @@ import SwiftUI
 
 enum AppPhase: Equatable, Sendable {
     case splash
+    case story
     case learn
     case simulation
     case result
     case kitBuilder
     case checklist
     case drill
+    case completion
 }
 
 // MARK: - Checklist Models
@@ -107,6 +109,7 @@ class GameState: ObservableObject {
     @Published var kitScore: Int = 0
     @Published var kitEssentialsFound: Int = 0
     @Published var drillCompleted: Bool = false
+    @Published var hasCompletedStory: Bool = false
 
     // MARK: - Persistence
     private static let checklistKey = "checklist_completed_items"
@@ -322,6 +325,8 @@ class GameState: ObservableObject {
         learnPhasesCompleted = []
         kitScore = 0
         kitEssentialsFound = 0
+        drillCompleted = false
+        hasCompletedStory = false
         checklistCategories = ChecklistData.allCategories()
         UserDefaults.standard.removeObject(forKey: Self.checklistKey)
     }

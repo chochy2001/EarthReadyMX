@@ -125,13 +125,13 @@ struct SplashView: View {
                 if showButton {
                     Button(action: {
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                            gameState.currentPhase = .learn
+                            gameState.currentPhase = .story
                         }
                     }) {
                         HStack(spacing: 12) {
                             Image(systemName: "shield.checkered")
                                 .font(.title3)
-                            Text("Start Learning")
+                            Text("Begin")
                                 .font(.system(.body, design: .rounded, weight: .bold))
                         }
                         .foregroundColor(.black)
@@ -150,8 +150,8 @@ struct SplashView: View {
                     .padding(.horizontal, 40)
                     .pulseEffect()
                     .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .accessibilityLabel("Start Learning")
-                    .accessibilityHint("Double tap to begin learning earthquake safety protocols")
+                    .accessibilityLabel("Begin")
+                    .accessibilityHint("Double tap to begin the EarthReady experience")
                 }
 
                 Spacer().frame(height: 40)
@@ -184,7 +184,7 @@ struct SplashView: View {
             startSeismograph()
             hapticManager.playEarthquakeSplash()
             AccessibilityAnnouncement.announceScreenChange(
-                "EarthReady. Earthquake preparedness app. Tap Start Learning to begin."
+                "EarthReady. Earthquake preparedness app. Tap Begin to start."
             )
             return
         }
@@ -216,7 +216,7 @@ struct SplashView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
             isShaking = false
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) { showButton = true }
-            AccessibilityAnnouncement.announceScreenChange("EarthReady. Earthquake preparedness. Tap Start Learning to begin.")
+            AccessibilityAnnouncement.announceScreenChange("EarthReady. Earthquake preparedness. Tap Begin to start.")
         }
     }
 

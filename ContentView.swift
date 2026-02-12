@@ -12,6 +12,9 @@ struct ContentView: View {
             case .splash:
                 SplashView()
                     .transition(.opacity.combined(with: .scale))
+            case .story:
+                StoryView()
+                    .transition(.opacity)
             case .learn:
                 LearnView()
                     .transition(.asymmetric(
@@ -48,6 +51,9 @@ struct ContentView: View {
                         insertion: .move(edge: .trailing).combined(with: .opacity),
                         removal: .move(edge: .leading).combined(with: .opacity)
                     ))
+            case .completion:
+                CompletionView()
+                    .transition(.scale.combined(with: .opacity))
             }
         }
         .animation(reduceMotion ? .none : .easeInOut(duration: 0.6), value: gameState.currentPhase)

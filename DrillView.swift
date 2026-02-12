@@ -362,7 +362,7 @@ struct DrillView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Phase \(currentPhase.rawValue + 1) of \(DrillPhase.allCases.count)")
+        .accessibilityLabel("Phase \(currentPhase.rawValue + 1) of \(DrillPhase.allCases.count): \(currentPhase.title)")
     }
 
     private func dotColor(for phase: DrillPhase) -> Color {
