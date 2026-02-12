@@ -176,6 +176,17 @@ struct ResultView: View {
 
     private var actionsSection: some View {
         VStack(spacing: 12) {
+            HStack {
+                Text("Your Progress")
+                    .font(.system(.body, design: .rounded, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                Text("\(sectionsCompletedCount) of 6")
+                    .font(.system(.callout, design: .rounded, weight: .semibold))
+                    .foregroundColor(.orange)
+            }
+            .accessibilityLabel("Progress: \(sectionsCompletedCount) of 6 sections completed")
+
             sectionButton(
                 title: "Learn Safety Protocols",
                 icon: "shield.lefthalf.filled",
@@ -236,24 +247,17 @@ struct ResultView: View {
                 }
             }
 
-            // Tertiary: Go to Checklist
-            Button(action: {
+            sectionButton(
+                title: "Review Your Checklist",
+                icon: "checklist",
+                colors: [.yellow, .orange],
+                isCompleted: gameState.isChecklistCompleted,
+                hint: "Double tap to review your earthquake preparedness checklist"
+            ) {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.currentPhase = .checklist
                 }
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "checklist")
-                    Text("Go to Checklist")
-                        .font(.system(.footnote, design: .rounded, weight: .semibold))
-                }
-                .foregroundColor(.white.opacity(0.7))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.white.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .accessibilityHint("Double tap to open your earthquake preparedness checklist")
 
             // Start Over
             Button(action: {
@@ -357,6 +361,17 @@ struct ResultView: View {
         if pct >= 80 { return "Well Done!" }
         if pct >= 60 { return "Good Start!" }
         return "Keep Practicing!"
+    }
+
+    private var sectionsCompletedCount: Int {
+        [
+            gameState.isLearnCompleted,
+            gameState.isKitCompleted,
+            gameState.isDrillCompleted,
+            gameState.isSeismicZonesCompleted,
+            gameState.isRoomScannerCompleted,
+            gameState.isChecklistCompleted
+        ].filter { $0 }.count
     }
 
     private var scoreColors: [Color] {

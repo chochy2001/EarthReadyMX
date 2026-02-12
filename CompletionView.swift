@@ -170,6 +170,24 @@ struct CompletionView: View {
                 VStack(spacing: 28) {
                     Spacer().frame(height: 30)
 
+                    HStack {
+                        Button(action: {
+                            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                gameState.currentPhase = .result
+                            }
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "chevron.left")
+                                Text("Back")
+                            }
+                            .font(.system(.callout, design: .rounded, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                        }
+                        .accessibilityLabel("Back to results")
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+
                     if showIcon {
                         shieldIcon
                             .transition(.scale.combined(with: .opacity))
