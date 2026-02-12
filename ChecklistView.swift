@@ -57,14 +57,18 @@ struct ChecklistView: View {
                             .padding(.top, 8)
                     }
 
-                    practiceDrillButton
-                        .padding(.top, 8)
+                    if !gameState.isDrillCompleted {
+                        practiceDrillButton
+                            .padding(.top, 8)
+                    }
 
                     backToResultsButton
                         .padding(.top, 8)
 
-                    buildYourKitButton
-                        .padding(.top, 8)
+                    if !gameState.isKitCompleted {
+                        buildYourKitButton
+                            .padding(.top, 8)
+                    }
 
                     startOverButton
                         .padding(.top, 4)
