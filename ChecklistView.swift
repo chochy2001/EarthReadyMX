@@ -52,7 +52,7 @@ struct ChecklistView: View {
                     sourceAttribution
                         .padding(.top, 8)
 
-                    if gameState.checklistPercentage == 100 {
+                    if gameState.allSectionsCompleted {
                         imReadyButton
                             .padding(.top, 8)
                     }

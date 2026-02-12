@@ -415,6 +415,11 @@ class GameState: ObservableObject {
         checklistPercentage == 100
     }
 
+    var allSectionsCompleted: Bool {
+        isLearnCompleted && isKitCompleted && isDrillCompleted &&
+        isSeismicZonesCompleted && isRoomScannerCompleted && isChecklistCompleted
+    }
+
     func toggleChecklistItem(categoryId: UUID, itemId: UUID) {
         guard let catIndex = checklistCategories.firstIndex(where: { $0.id == categoryId }),
               let itemIndex = checklistCategories[catIndex].items.firstIndex(where: { $0.id == itemId }) else {

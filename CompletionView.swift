@@ -4,23 +4,19 @@ import UIKit
 // MARK: - Shareable Achievement Card
 
 private struct ShareableAchievementCard: View {
-    let scorePercentage: Double
-    let kitScore: Int
+    let learnCompleted: Bool
+    let kitCompleted: Bool
     let drillCompleted: Bool
-    let checklistPercentage: Int
-
-    private var scoreColor: Color {
-        if scorePercentage >= 80 { return .green }
-        if scorePercentage >= 60 { return .orange }
-        return .red
-    }
+    let seismicCompleted: Bool
+    let roomScannerCompleted: Bool
+    let checklistCompleted: Bool
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             Spacer().frame(height: 16)
 
             Image(systemName: "checkmark.shield.fill")
-                .font(.system(size: 56))
+                .font(.system(size: 48))
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.green, .mint],
@@ -31,7 +27,7 @@ private struct ShareableAchievementCard: View {
                 .shadow(color: .green.opacity(0.4), radius: 12)
 
             Text("You're Earthquake Ready!")
-                .font(.system(.title2, design: .rounded, weight: .black))
+                .font(.system(.title3, design: .rounded, weight: .black))
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.orange, .yellow],
@@ -41,33 +37,51 @@ private struct ShareableAchievementCard: View {
                 )
                 .multilineTextAlignment(.center)
 
-            VStack(spacing: 10) {
-                HStack(spacing: 10) {
+            Text("All 6 sections completed")
+                .font(.system(.caption, design: .rounded, weight: .medium))
+                .foregroundColor(.gray)
+
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
                     shareStatCard(
-                        icon: "brain.head.profile",
-                        title: "Quiz Score",
-                        value: "\(Int(scorePercentage))%",
-                        color: scoreColor
+                        icon: "shield.lefthalf.filled",
+                        title: "Learn",
+                        completed: learnCompleted,
+                        colors: [.orange, .yellow]
                     )
                     shareStatCard(
                         icon: "bag.fill",
-                        title: "Kit Builder",
-                        value: kitScore > 0 ? "\(kitScore) pts" : "Not played",
-                        color: .orange
+                        title: "Kit",
+                        completed: kitCompleted,
+                        colors: [.green, .mint]
                     )
                 }
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     shareStatCard(
                         icon: "figure.walk",
                         title: "Drill",
-                        value: drillCompleted ? "Done" : "Pending",
-                        color: drillCompleted ? .green : .gray
+                        completed: drillCompleted,
+                        colors: [.cyan, .blue]
+                    )
+                    shareStatCard(
+                        icon: "map.fill",
+                        title: "Seismic",
+                        completed: seismicCompleted,
+                        colors: [.purple, .indigo]
+                    )
+                }
+                HStack(spacing: 8) {
+                    shareStatCard(
+                        icon: "camera.viewfinder",
+                        title: "Scanner",
+                        completed: roomScannerCompleted,
+                        colors: [.pink, .red]
                     )
                     shareStatCard(
                         icon: "checklist",
                         title: "Checklist",
-                        value: "\(checklistPercentage)%",
-                        color: checklistPercentage == 100 ? .green : .orange
+                        completed: checklistCompleted,
+                        colors: [.yellow, .orange]
                     )
                 }
             }
@@ -84,7 +98,7 @@ private struct ShareableAchievementCard: View {
 
             Spacer().frame(height: 12)
         }
-        .frame(width: 400, height: 500)
+        .frame(width: 400, height: 540)
         .background(
             LinearGradient(
                 colors: [
@@ -102,33 +116,36 @@ private struct ShareableAchievementCard: View {
     private func shareStatCard(
         icon: String,
         title: String,
-        value: String,
-        color: Color
+        completed: Bool,
+        colors: [Color]
     ) -> some View {
-        VStack(spacing: 6) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(.callout))
-                    .foregroundColor(color)
-            }
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(.caption))
+                .foregroundColor(completed ? .black : colors[0])
             Text(title)
-                .font(.system(.caption2, design: .rounded, weight: .semibold))
-                .foregroundColor(.gray)
-            Text(value)
-                .font(.system(.body, design: .rounded, weight: .bold))
-                .foregroundColor(.white)
+                .font(.system(.caption2, design: .rounded, weight: .bold))
+                .foregroundColor(completed ? .black : .white)
+            Spacer()
+            if completed {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(.caption))
+                    .foregroundColor(.black)
+            }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
-        .background(Color.white.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(color.opacity(0.15), lineWidth: 1)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        .background(
+            Group {
+                if completed {
+                    LinearGradient(colors: colors, startPoint: .leading, endPoint: .trailing)
+                } else {
+                    Color.white.opacity(0.06)
+                }
+            }
         )
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -283,125 +300,86 @@ struct CompletionView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityAddTraits(.isHeader)
 
-            HStack(spacing: 12) {
-                statCard(
-                    icon: "brain.head.profile",
-                    title: "Quiz Score",
-                    value: "\(Int(gameState.scorePercentage))%",
-                    color: scoreColor,
-                    badge: differentiateWithoutColor ? scoreBadgeText : nil
-                )
+            Text("6 of 6 Sections Completed")
+                .font(.system(.callout, design: .rounded, weight: .semibold))
+                .foregroundColor(.green)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                statCard(
-                    icon: "bag.fill",
-                    title: "Kit Builder",
-                    value: kitBuilderValue,
-                    color: .orange,
-                    badge: differentiateWithoutColor ? kitBadgeText : nil
-                )
-            }
-
-            HStack(spacing: 12) {
-                statCard(
-                    icon: "figure.walk",
-                    title: "Drill",
-                    value: gameState.drillCompleted ? "Done" : "Pending",
-                    color: gameState.drillCompleted ? .green : .gray,
-                    badge: differentiateWithoutColor
-                        ? (gameState.drillCompleted ? "COMPLETED" : "PENDING")
-                        : nil
-                )
-
-                statCard(
-                    icon: "checklist",
-                    title: "Checklist",
-                    value: "\(gameState.checklistPercentage)%",
-                    color: gameState.checklistPercentage == 100 ? .green : .orange,
-                    badge: differentiateWithoutColor
-                        ? "\(gameState.checklistPercentage)% DONE"
-                        : nil
-                )
-            }
+            completionRow(
+                icon: "shield.lefthalf.filled",
+                title: "Learn Safety Protocols",
+                completed: gameState.isLearnCompleted,
+                colors: [.orange, .yellow]
+            )
+            completionRow(
+                icon: "bag.fill",
+                title: "Build Your Kit",
+                completed: gameState.isKitCompleted,
+                colors: [.green, .mint]
+            )
+            completionRow(
+                icon: "figure.walk",
+                title: "Practice Drill",
+                completed: gameState.isDrillCompleted,
+                colors: [.cyan, .blue]
+            )
+            completionRow(
+                icon: "map.fill",
+                title: "Seismic Zones",
+                completed: gameState.isSeismicZonesCompleted,
+                colors: [.purple, .indigo]
+            )
+            completionRow(
+                icon: "camera.viewfinder",
+                title: "Room Safety Scanner",
+                completed: gameState.isRoomScannerCompleted,
+                colors: [.pink, .red]
+            )
+            completionRow(
+                icon: "checklist",
+                title: "Review Your Checklist",
+                completed: gameState.isChecklistCompleted,
+                colors: [.yellow, .orange]
+            )
         }
         .padding(.horizontal, 20)
     }
 
-    private func statCard(
+    private func completionRow(
         icon: String,
         title: String,
-        value: String,
-        color: Color,
-        badge: String?
+        completed: Bool,
+        colors: [Color]
     ) -> some View {
-        VStack(spacing: 8) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 44, height: 44)
-                Image(systemName: icon)
-                    .font(.system(.body))
-                    .foregroundColor(color)
-            }
-
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(.body))
+                .foregroundColor(completed ? .black : colors[0])
+                .frame(width: 24)
             Text(title)
-                .font(.system(.caption, design: .rounded, weight: .semibold))
-                .foregroundColor(.gray)
-
-            Text(value)
-                .font(.system(.title3, design: .rounded, weight: .bold))
-                .foregroundColor(.white)
-                .minimumScaleFactor(0.7)
-
-            if let badge = badge {
-                Text(badge)
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                    .foregroundColor(color)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(color.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                .font(.system(.callout, design: .rounded, weight: .semibold))
+                .foregroundColor(completed ? .black : .white)
+            Spacer()
+            if completed {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(.body))
+                    .foregroundColor(.black)
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(Color.white.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(color.opacity(0.15), lineWidth: 1)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            Group {
+                if completed {
+                    LinearGradient(colors: colors, startPoint: .leading, endPoint: .trailing)
+                } else {
+                    Color.white.opacity(0.06)
+                }
+            }
         )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title): \(value)")
-    }
-
-    // MARK: - Computed Properties
-
-    private var scoreColor: Color {
-        let pct = gameState.scorePercentage
-        if pct >= 80 { return .green }
-        if pct >= 60 { return .orange }
-        return .red
-    }
-
-    private var scoreBadgeText: String {
-        let pct = gameState.scorePercentage
-        if pct >= 80 { return "GREAT" }
-        if pct >= 60 { return "GOOD" }
-        return "NEEDS WORK"
-    }
-
-    private var kitBuilderValue: String {
-        if gameState.kitScore > 0 {
-            return "\(gameState.kitScore) pts"
-        }
-        return "Not played"
-    }
-
-    private var kitBadgeText: String {
-        if gameState.kitScore > 0 {
-            return "\(gameState.kitScore) POINTS"
-        }
-        return "NOT PLAYED"
+        .accessibilityLabel("\(title), \(completed ? "completed" : "pending")")
     }
 
     // MARK: - Actions Section
@@ -479,10 +457,12 @@ struct CompletionView: View {
 
     private func shareAchievement() {
         let card = ShareableAchievementCard(
-            scorePercentage: gameState.scorePercentage,
-            kitScore: gameState.kitScore,
-            drillCompleted: gameState.drillCompleted,
-            checklistPercentage: gameState.checklistPercentage
+            learnCompleted: gameState.isLearnCompleted,
+            kitCompleted: gameState.isKitCompleted,
+            drillCompleted: gameState.isDrillCompleted,
+            seismicCompleted: gameState.isSeismicZonesCompleted,
+            roomScannerCompleted: gameState.isRoomScannerCompleted,
+            checklistCompleted: gameState.isChecklistCompleted
         )
         let renderer = ImageRenderer(content: card)
         renderer.scale = 3

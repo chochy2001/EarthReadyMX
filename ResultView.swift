@@ -259,6 +259,32 @@ struct ResultView: View {
                 }
             }
 
+            if gameState.allSectionsCompleted {
+                Button(action: {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        gameState.currentPhase = .completion
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.shield.fill")
+                        Text("I'm Ready!")
+                            .font(.system(.callout, design: .rounded, weight: .bold))
+                    }
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        LinearGradient(
+                            colors: [.green, .mint],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .accessibilityHint("Double tap to see your achievement and share it")
+            }
+
             // Start Over
             Button(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {

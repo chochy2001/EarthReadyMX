@@ -385,12 +385,12 @@ struct KitBuilderView: View {
                 VStack(spacing: 12) {
                     Button(action: {
                         withAnimation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.7)) {
-                            gameState.currentPhase = .checklist
+                            gameState.currentPhase = .result
                         }
                     }) {
                         HStack(spacing: 8) {
-                            Image(systemName: "checklist")
-                            Text("Continue to Checklist")
+                            Image(systemName: "arrow.left")
+                            Text("Back to Results")
                                 .font(.system(.callout, design: .rounded, weight: .bold))
                         }
                         .foregroundColor(.black)
@@ -405,7 +405,7 @@ struct KitBuilderView: View {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
-                    .accessibilityHint("Double tap to open your earthquake preparedness checklist")
+                    .accessibilityHint("Double tap to return to your progress")
 
                     Button(action: {
                         resetAndReplay()
@@ -422,24 +422,6 @@ struct KitBuilderView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                     .accessibilityHint("Double tap to restart the kit builder game")
-
-                    Button(action: {
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                            gameState.currentPhase = .result
-                        }
-                    }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "arrow.left")
-                            Text("Back to Results")
-                                .font(.system(.footnote, design: .rounded, weight: .semibold))
-                        }
-                        .foregroundColor(.white.opacity(0.7))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.white.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                    }
-                    .accessibilityHint("Double tap to return to results")
                 }
                 .padding(.horizontal, 20)
 
