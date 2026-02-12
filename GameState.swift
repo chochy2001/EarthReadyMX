@@ -92,7 +92,6 @@ class GameState: ObservableObject {
     @Published var score: Int = 0
     @Published var totalQuestions: Int = 0
     @Published var answeredScenarios: [UUID: Bool] = [:]
-    @Published var currentLearnPhase: EarthquakePhase = .before
     @Published var learnPhasesCompleted: Set<EarthquakePhase> = []
     @Published var checklistCategories: [ChecklistCategory] = ChecklistData.allCategories()
 
@@ -241,7 +240,6 @@ class GameState: ObservableObject {
         score = 0
         totalQuestions = 0
         answeredScenarios = [:]
-        currentLearnPhase = .before
         learnPhasesCompleted = []
         checklistCategories = ChecklistData.allCategories()
     }

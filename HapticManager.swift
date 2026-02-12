@@ -68,10 +68,6 @@ final class HapticManager: ObservableObject {
         }
     }
 
-    func stopEngine() {
-        engine?.stop()
-        engineNeedsStart = true
-    }
 }
 
 // MARK: - Earthquake Splash Pattern (2.2s)

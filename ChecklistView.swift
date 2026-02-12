@@ -4,7 +4,6 @@ struct ChecklistView: View {
     @EnvironmentObject var gameState: GameState
     @EnvironmentObject var hapticManager: HapticManager
     @State private var selectedCategory: ChecklistCategory?
-    @State private var showCelebration = false
 
     var body: some View {
         ZStack {

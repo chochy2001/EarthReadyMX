@@ -36,7 +36,7 @@ MyApp.swift → ContentView.swift → SplashView / LearnView / SimulationView / 
 **Prioridad: CRITICA**
 
 - [x] `HapticManager.swift` - 6 patrones hapticos (earthquake, correct, wrong, celebration, encouragement, splash)
-- [x] `SoundManager.swift` - Sintesis de audio con AVAudioEngine + 6 osciladores
+- [x] `SoundManager.swift` - Sintesis de audio con AVAudioEngine + 4 osciladores
 - [x] Integrar en SplashView (alerta sismica SASMEX al inicio)
 - [x] Integrar en SimulationView (rumble de terremoto + feedback de respuestas)
 - [x] Integrar en ResultView (celebracion basada en porcentaje)
@@ -143,7 +143,7 @@ Implementacion pragmatica: escenas ilustradas con SF Symbols + countdown timer +
 | Lineas de codigo | 3,928 |
 | Tamano del proyecto | 896 KB |
 | Patrones hapticos | 6 |
-| Osciladores de audio | 6 |
+| Osciladores de audio | 4 |
 | Escenas ilustradas | 5 |
 | Items de checklist | 34 |
 | Categorias de checklist | 3 |

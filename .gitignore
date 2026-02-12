@@ -15,3 +15,12 @@ DerivedData/
 .DS_Store
 *.swp
 *~
+
+# Assets catalog breaks App Playground loading
+Assets.xcassets/
+
+# Spurious files
+--db-path
+
+# Claude Code artifacts
+~/

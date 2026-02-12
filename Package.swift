@@ -38,7 +38,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "AppModule",
-            path: "."
+            path: ".",
+            exclude: ["docs", "README.md", "~"]
         )
     ],
     swiftLanguageVersions: [.version("6")]
