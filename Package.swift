@@ -32,14 +32,15 @@ let package = Package(
                 .landscapeLeft,
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
             ],
-            appCategory: .reference
+            appCategory: .reference,
+            additionalInfoPlistContentFilePath: "SupportingInfo.plist"
         )
     ],
     targets: [
         .executableTarget(
             name: "AppModule",
             path: ".",
-            exclude: ["docs", "README.md", "~"]
+            exclude: ["docs", "README.md", "~", "SupportingInfo.plist"]
         )
     ],
     swiftLanguageVersions: [.version("6")]
