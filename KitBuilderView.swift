@@ -617,21 +617,30 @@ private struct DraggableKitItem: View {
         .gesture(
             isInBag
                 ? nil
-                : DragGesture(coordinateSpace: .global)
+                : LongPressGesture(minimumDuration: 0.3)
+                    .sequenced(before: DragGesture(coordinateSpace: .global))
                     .onChanged { value in
-                        dragOffset = value.translation
-                        isDragging = true
+                        switch value {
+                        case .first(true):
+                            isDragging = true
+                        case .second(true, let drag):
+                            if let drag = drag {
+                                dragOffset = drag.translation
+                            }
+                        default:
+                            break
+                        }
                     }
                     .onEnded { value in
                         isDragging = false
-                        if bagFrame.contains(value.location) {
-                            onDrop()
+                        if case .second(true, let drag) = value,
+                           let dragValue = drag {
+                            let expandedBagFrame = bagFrame.insetBy(dx: -40, dy: -40)
+                            if expandedBagFrame.contains(dragValue.location) {
+                                onDrop()
+                            }
                         }
-                        withAnimation(
-                            reduceMotion
-                                ? .none
-                                : .spring(response: 0.4, dampingFraction: 0.7)
-                        ) {
+                        withAnimation(reduceMotion ? .none : .spring(response: 0.4, dampingFraction: 0.7)) {
                             dragOffset = .zero
                         }
                     }
