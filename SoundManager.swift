@@ -146,13 +146,13 @@ final class SoundManager: ObservableObject {
 
     private let bank = OscillatorBank()
 
-    init() {
-        configureAudioSession()
-    }
+    private var audioSessionConfigured = false
 
     // MARK: - Audio Session
 
-    private func configureAudioSession() {
+    private func ensureAudioSession() {
+        guard !audioSessionConfigured else { return }
+        audioSessionConfigured = true
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
@@ -168,6 +168,7 @@ final class SoundManager: ObservableObject {
 
     private func setupEngine() {
         guard engine == nil else { return }
+        ensureAudioSession()
 
         let audioEngine = AVAudioEngine()
         let hardwareSampleRate = audioEngine.outputNode.outputFormat(forBus: 0).sampleRate
