@@ -4,6 +4,7 @@ struct SplashView: View {
     @EnvironmentObject var gameState: GameState
     @EnvironmentObject var hapticManager: HapticManager
     @EnvironmentObject var soundManager: SoundManager
+    @EnvironmentObject var motionManager: MotionManager
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     @State private var shakeAmount: CGFloat = 0
     @State private var showTitle = false
@@ -160,11 +161,15 @@ struct SplashView: View {
         }
         .onAppear {
             viewSize = geometry.size
+            if !reduceMotion {
+                motionManager.startUpdates()
+            }
             startAnimationSequence()
         }
         .onDisappear {
             seismographTimer?.invalidate()
             seismographTimer = nil
+            motionManager.stopUpdates()
             soundManager.stop()
         }
         } // GeometryReader
@@ -219,11 +224,29 @@ struct SplashView: View {
         seismographTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
             Task { @MainActor in
                 seismographPoints.removeFirst()
-                if isShaking {
-                    seismographPoints.append(CGFloat.random(in: -1...1))
+                if motionManager.isMotionAvailable {
+                    // Use real accelerometer data from CoreMotion
+                    if isShaking {
+                        // During earthquake animation: amplify real motion data
+                        let motionValue = motionManager.filteredMagnitude
+                        let amplified = motionValue * 2.5
+                        let clamped = max(-1, min(1, amplified))
+                        seismographPoints.append(clamped)
+                    } else {
+                        // After shake: show subtle live baseline from real motion
+                        let motionValue = motionManager.filteredMagnitude * 0.3
+                        let last = seismographPoints.last ?? 0
+                        let blended = last * 0.7 + motionValue * 0.3
+                        seismographPoints.append(blended)
+                    }
                 } else {
-                    let last = seismographPoints.last ?? 0
-                    seismographPoints.append(last * 0.9 + CGFloat.random(in: -0.05...0.05))
+                    // Fallback: synthetic data for Simulator
+                    if isShaking {
+                        seismographPoints.append(CGFloat.random(in: -1...1))
+                    } else {
+                        let last = seismographPoints.last ?? 0
+                        seismographPoints.append(last * 0.9 + CGFloat.random(in: -0.05...0.05))
+                    }
                 }
             }
         }

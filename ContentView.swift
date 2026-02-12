@@ -30,8 +30,20 @@ struct ContentView: View {
                         insertion: .scale.combined(with: .opacity),
                         removal: .opacity
                     ))
+            case .kitBuilder:
+                KitBuilderView()
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
             case .checklist:
                 ChecklistView()
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
+            case .drill:
+                DrillView()
                     .transition(.asymmetric(
                         insertion: .move(edge: .trailing).combined(with: .opacity),
                         removal: .move(edge: .leading).combined(with: .opacity)

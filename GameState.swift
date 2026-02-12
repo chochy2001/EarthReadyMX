@@ -5,7 +5,9 @@ enum AppPhase: Equatable, Sendable {
     case learn
     case simulation
     case result
+    case kitBuilder
     case checklist
+    case drill
 }
 
 // MARK: - Checklist Models
@@ -102,6 +104,9 @@ class GameState: ObservableObject {
     @Published var answeredScenarios: [UUID: Bool] = [:]
     @Published var learnPhasesCompleted: Set<EarthquakePhase> = []
     @Published var checklistCategories: [ChecklistCategory] = ChecklistData.allCategories()
+    @Published var kitScore: Int = 0
+    @Published var kitEssentialsFound: Int = 0
+    @Published var drillCompleted: Bool = false
 
     // MARK: - Persistence
     private static let checklistKey = "checklist_completed_items"
@@ -304,12 +309,19 @@ class GameState: ObservableObject {
         learnPhasesCompleted = []
     }
 
+    func resetKitBuilder() {
+        kitScore = 0
+        kitEssentialsFound = 0
+    }
+
     func resetAll() {
         currentPhase = .splash
         score = 0
         totalQuestions = 0
         answeredScenarios = [:]
         learnPhasesCompleted = []
+        kitScore = 0
+        kitEssentialsFound = 0
         checklistCategories = ChecklistData.allCategories()
         UserDefaults.standard.removeObject(forKey: Self.checklistKey)
     }

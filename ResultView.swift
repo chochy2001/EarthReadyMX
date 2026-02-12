@@ -178,6 +178,26 @@ struct ResultView: View {
         VStack(spacing: 12) {
             Button(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    gameState.currentPhase = .kitBuilder
+                }
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bag.fill")
+                    Text("Build Your Kit")
+                        .font(.system(.callout, design: .rounded, weight: .bold))
+                }
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .accessibilityHint("Double tap to build your emergency kit by dragging items into a backpack")
+
+            Button(action: {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.currentPhase = .checklist
                 }
             }) {
@@ -195,6 +215,26 @@ struct ResultView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .accessibilityHint("Double tap to open your earthquake preparedness checklist")
+
+            Button(action: {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    gameState.currentPhase = .drill
+                }
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "figure.walk")
+                    Text("Practice Drill")
+                        .font(.system(.callout, design: .rounded, weight: .bold))
+                }
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    LinearGradient(colors: [.cyan, .blue], startPoint: .leading, endPoint: .trailing)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .accessibilityHint("Double tap to start a guided earthquake drill with voice instructions")
 
             Button(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {

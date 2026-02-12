@@ -52,6 +52,9 @@ struct ChecklistView: View {
                     sourceAttribution
                         .padding(.top, 8)
 
+                    practiceDrillButton
+                        .padding(.top, 8)
+
                     startOverButton
                         .padding(.top, 4)
 
@@ -143,6 +146,34 @@ struct ChecklistView: View {
                 .font(.system(.caption2, design: .rounded, weight: .medium))
                 .foregroundColor(.gray.opacity(0.6))
         }
+    }
+
+    // MARK: - Practice Drill Button
+
+    private var practiceDrillButton: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                gameState.currentPhase = .drill
+            }
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: "figure.walk")
+                Text("Practice Drill")
+                    .font(.system(.callout, design: .rounded, weight: .bold))
+            }
+            .foregroundColor(.black)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                LinearGradient(
+                    colors: [.cyan, .blue],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .accessibilityHint("Double tap to start a guided earthquake drill with voice instructions")
     }
 
     // MARK: - Start Over Button
