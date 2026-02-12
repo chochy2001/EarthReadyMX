@@ -181,11 +181,11 @@ struct LearnView: View {
                         // User already completed quiz, continue to next activity
                         Button(action: {
                             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                                gameState.currentPhase = .checklist
+                                gameState.currentPhase = .result
                             }
                         }) {
                             HStack(spacing: 8) {
-                                Text("Continue")
+                                Text("Back to Results")
                                     .font(.system(.footnote, design: .rounded, weight: .bold))
                                 Image(systemName: "arrow.right")
                             }

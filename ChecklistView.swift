@@ -60,6 +60,12 @@ struct ChecklistView: View {
                     practiceDrillButton
                         .padding(.top, 8)
 
+                    backToResultsButton
+                        .padding(.top, 8)
+
+                    buildYourKitButton
+                        .padding(.top, 8)
+
                     startOverButton
                         .padding(.top, 4)
 
@@ -179,6 +185,62 @@ struct ChecklistView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .accessibilityHint("Double tap to start a guided earthquake drill with voice instructions")
+    }
+
+    // MARK: - Back to Results Button
+
+    private var backToResultsButton: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                gameState.currentPhase = .result
+            }
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.left.circle")
+                Text("Back to Results")
+                    .font(.system(.callout, design: .rounded, weight: .bold))
+            }
+            .foregroundColor(.black)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                LinearGradient(
+                    colors: [.blue, .blue.opacity(0.8)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .accessibilityHint("Double tap to return to results")
+    }
+
+    // MARK: - Build Your Kit Button
+
+    private var buildYourKitButton: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                gameState.currentPhase = .kitBuilder
+            }
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: "bag.fill")
+                Text("Build Your Kit")
+                    .font(.system(.callout, design: .rounded, weight: .bold))
+            }
+            .foregroundColor(.black)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                LinearGradient(
+                    colors: [.green, .green.opacity(0.8)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .accessibilityHint("Double tap to build your emergency kit")
     }
 
     // MARK: - I'm Ready Button

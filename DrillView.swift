@@ -567,12 +567,12 @@ struct DrillView: View {
 
                 Button(action: {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                        gameState.currentPhase = .checklist
+                        gameState.currentPhase = .result
                     }
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "chevron.left")
-                        Text("Back to Checklist")
+                        Text("Back to Results")
                             .font(.system(.footnote, design: .rounded, weight: .semibold))
                     }
                     .foregroundColor(.white.opacity(0.7))
@@ -581,7 +581,7 @@ struct DrillView: View {
                     .background(Color.white.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
-                .accessibilityHint("Double tap to return to the checklist")
+                .accessibilityHint("Double tap to return to results")
             }
             .padding(.horizontal, 40)
 
@@ -651,12 +651,12 @@ struct DrillView: View {
 
                 Button(action: {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                        gameState.currentPhase = .checklist
+                        gameState.currentPhase = .result
                     }
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "checklist")
-                        Text("Continue to Checklist")
+                        Text("Back to Results")
                             .font(.system(.callout, design: .rounded, weight: .bold))
                     }
                     .foregroundColor(.black)
@@ -671,7 +671,7 @@ struct DrillView: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
-                .accessibilityHint("Double tap to continue to the preparedness checklist")
+                .accessibilityHint("Double tap to return to results")
             }
             .padding(.horizontal, 40)
 
