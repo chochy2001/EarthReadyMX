@@ -155,6 +155,8 @@ struct SplashView: View {
 
                 Spacer().frame(height: 40)
             }
+            .frame(maxWidth: 600)
+            .frame(maxWidth: .infinity)
         }
         .onAppear {
             viewSize = geometry.size
@@ -209,6 +211,7 @@ struct SplashView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
             isShaking = false
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) { showButton = true }
+            AccessibilityAnnouncement.announceScreenChange("EarthReady. Earthquake preparedness. Tap Start Learning to begin.")
         }
     }
 

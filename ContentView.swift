@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var gameState: GameState
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     var body: some View {
         ZStack {
@@ -37,6 +38,6 @@ struct ContentView: View {
                     ))
             }
         }
-        .animation(.easeInOut(duration: 0.6), value: gameState.currentPhase)
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.6), value: gameState.currentPhase)
     }
 }

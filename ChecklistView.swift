@@ -27,6 +27,9 @@ struct ChecklistView: View {
             }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedCategory?.id)
+        .onAppear {
+            AccessibilityAnnouncement.announceScreenChange("Preparedness checklist. \(gameState.completedChecklistItems) of \(gameState.totalChecklistItems) items completed.")
+        }
     }
 
     // MARK: - Main Checklist View
@@ -57,6 +60,8 @@ struct ChecklistView: View {
                 .padding(.horizontal, 20)
             }
         }
+        .frame(maxWidth: 700)
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Header
@@ -145,7 +150,7 @@ struct ChecklistView: View {
     private var startOverButton: some View {
         Button(action: {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                gameState.reset()
+                gameState.resetAll()
             }
         }) {
             HStack(spacing: 8) {
@@ -261,6 +266,8 @@ struct ChecklistView: View {
                 .padding(.horizontal, 20)
             }
         }
+        .frame(maxWidth: 700)
+        .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
@@ -377,12 +384,12 @@ struct ChecklistItemRow: View {
                             .font(.system(.caption))
                             .foregroundColor(item.isCompleted ? categoryColor.opacity(0.5) : categoryColor)
                         Text(item.title)
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .font(.system(.footnote, design: .rounded, weight: .semibold))
                             .foregroundColor(item.isCompleted ? .gray : .white)
                             .strikethrough(item.isCompleted, color: .gray.opacity(0.5))
                     }
                     Text(item.description)
-                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .font(.system(.caption, design: .rounded))
                         .foregroundColor(.gray.opacity(item.isCompleted ? 0.5 : 0.8))
                         .lineLimit(2)
                 }

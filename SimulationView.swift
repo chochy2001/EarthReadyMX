@@ -5,6 +5,7 @@ struct SimulationView: View {
     @EnvironmentObject var hapticManager: HapticManager
     @EnvironmentObject var soundManager: SoundManager
     @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @State private var currentIndex = 0
     @State private var selectedOption: SimulationOption?
     @State private var showExplanation = false
@@ -15,6 +16,7 @@ struct SimulationView: View {
     @State private var countdownTimer: Timer?
     @State private var sceneShaking = true
     @State private var timedOut = false
+    @State private var hasAppeared = false
 
     private var currentScenario: SimulationScenario? {
         guard currentIndex < gameState.scenarios.count else { return nil }
@@ -49,14 +51,14 @@ struct SimulationView: View {
                                     isShaking: sceneShaking && selectedOption == nil
                                 )
                                 .modifier(ShakeEffect(
-                                    amount: sceneShaking && selectedOption == nil ? 3 : 0,
+                                    amount: !reduceMotion && sceneShaking && selectedOption == nil ? 3 : 0,
                                     animatableData: shakeAmount
                                 ))
                                 .padding(.horizontal, 20)
 
                                 scenarioCard(scenario)
                                     .modifier(ShakeEffect(
-                                        amount: selectedOption != nil && selectedOption?.isCorrect == false ? 8 : 0,
+                                        amount: !reduceMotion && selectedOption != nil && selectedOption?.isCorrect == false ? 8 : 0,
                                         animatableData: shakeAmount
                                     ))
                             } else {
@@ -83,11 +85,16 @@ struct SimulationView: View {
                     }
                 }
             }
+            .frame(maxWidth: 700)
+            .frame(maxWidth: .infinity)
         }
         .onAppear {
+            guard !hasAppeared else { return }
+            hasAppeared = true
             hapticManager.playEarthquakeSimulation()
             soundManager.playEarthquakeRumble()
             startTimer()
+            AccessibilityAnnouncement.announceScreenChange("Emergency Simulation. Make the right call.")
         }
         .onDisappear {
             soundManager.stopEarthquakeRumble()
@@ -201,6 +208,10 @@ struct SimulationView: View {
                 selectedOption = option
                 showExplanation = true
                 gameState.answerScenario(scenario, correct: option.isCorrect)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                let result = option.isCorrect ? "Correct" : "Incorrect"
+                AccessibilityAnnouncement.announceScreenChange("\(result). \(scenario.explanation)")
             }
             if option.isCorrect {
                 hapticManager.playCorrectAnswer()
@@ -353,6 +364,11 @@ struct SimulationView: View {
                     timedOut = false
                 }
                 startTimer()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if let scenario = currentScenario {
+                        AccessibilityAnnouncement.announceScreenChange("Scenario \(currentIndex + 1) of \(gameState.scenarios.count). \(scenario.situation)")
+                    }
+                }
             } else {
                 stopTimer()
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
@@ -389,9 +405,10 @@ struct SimulationView: View {
         countdownTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
             Task { @MainActor in
                 guard timerActive else { return }
-                if timeRemaining > 0 {
-                    timeRemaining -= 0.1
+                if timeRemaining > 0.05 {
+                    timeRemaining = max(0, timeRemaining - 0.1)
                 } else {
+                    timeRemaining = 0
                     handleTimeout()
                 }
             }
@@ -421,6 +438,7 @@ struct SimulationView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             withAnimation { intensity = 0 }
         }
+        AccessibilityAnnouncement.announceScreenChange("Time's up. The correct answer is highlighted.")
     }
 
     // MARK: - Color Helpers

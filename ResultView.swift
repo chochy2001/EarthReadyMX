@@ -51,6 +51,8 @@ struct ResultView: View {
 
                     Spacer().frame(height: 40)
                 }
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity)
             }
         }
         .onAppear { startAnimationSequence() }
@@ -89,6 +91,7 @@ struct ResultView: View {
             Text(scoreTitle)
                 .font(.system(.title2, design: .rounded, weight: .bold))
                 .foregroundColor(scoreColors.first ?? .white)
+                .accessibilityAddTraits(.isHeader)
             Text(gameState.scoreMessage)
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundColor(.gray)
@@ -144,7 +147,7 @@ struct ResultView: View {
                         )
                 )
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Scenario \(index + 1): \(wasCorrect ? "Correct" : "Incorrect")")
+                .accessibilityLabel("Scenario \(index + 1): \(scenario.situation). \(wasCorrect ? "Correct" : "Incorrect")")
             }
         }
         .padding(.horizontal, 20)
@@ -195,7 +198,7 @@ struct ResultView: View {
 
             Button(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    gameState.reset()
+                    gameState.resetQuiz()
                 }
             }) {
                 HStack(spacing: 8) {
@@ -223,6 +226,7 @@ struct ResultView: View {
                 .background(Color.orange.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
+            .accessibilityHint("Double tap to share EarthReady with others")
         }
         .padding(.horizontal, 20)
     }

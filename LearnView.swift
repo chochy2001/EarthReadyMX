@@ -38,6 +38,11 @@ struct LearnView: View {
 
                 bottomSection
             }
+            .frame(maxWidth: 700)
+            .frame(maxWidth: .infinity)
+        }
+        .onAppear {
+            AccessibilityAnnouncement.announceScreenChange("Safety Protocol. Learn earthquake safety tips.")
         }
     }
 

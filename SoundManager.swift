@@ -142,6 +142,7 @@ final class SoundManager: ObservableObject {
     private var sourceNode: AVAudioSourceNode?
     private var isPlaying = false
     private var modulationTimer: Timer?
+    private var alertGeneration: Int = 0
 
     private let bank = OscillatorBank()
 
@@ -222,6 +223,7 @@ final class SoundManager: ObservableObject {
     }
 
     func stop() {
+        alertGeneration += 1
         stopEngine()
     }
 }
@@ -234,6 +236,9 @@ extension SoundManager {
         setupEngine()
         startEngine()
 
+        alertGeneration += 1
+        let currentGeneration = alertGeneration
+
         bank.update(0) { ctrl in
             ctrl.waveform = .sine
             ctrl.isActive = true
@@ -245,27 +250,31 @@ extension SoundManager {
             let offset = Double(i) * 0.95
 
             DispatchQueue.main.asyncAfter(deadline: .now() + offset) { [weak self] in
-                self?.bank.update(0) { ctrl in
+                guard let self = self, self.alertGeneration == currentGeneration else { return }
+                self.bank.update(0) { ctrl in
                     ctrl.frequency = 950
                     ctrl.amplitude = 0.3
                 }
             }
 
             DispatchQueue.main.asyncAfter(deadline: .now() + offset + 0.4) { [weak self] in
-                self?.bank.update(0) { ctrl in
+                guard let self = self, self.alertGeneration == currentGeneration else { return }
+                self.bank.update(0) { ctrl in
                     ctrl.frequency = 1200
                 }
             }
 
             DispatchQueue.main.asyncAfter(deadline: .now() + offset + 0.8) { [weak self] in
-                self?.bank.update(0) { ctrl in
+                guard let self = self, self.alertGeneration == currentGeneration else { return }
+                self.bank.update(0) { ctrl in
                     ctrl.amplitude = 0
                 }
             }
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
-            self?.fadeOutOscillator(index: 0, duration: 0.2)
+            guard let self = self, self.alertGeneration == currentGeneration else { return }
+            self.fadeOutOscillator(index: 0, duration: 0.2)
         }
     }
 }
@@ -339,7 +348,9 @@ extension SoundManager {
                 }
             }
         }
-        RunLoop.main.add(modulationTimer!, forMode: .common)
+        if let timer = modulationTimer {
+            RunLoop.main.add(timer, forMode: .common)
+        }
     }
 
     func stopEarthquakeRumble() {

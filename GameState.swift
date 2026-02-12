@@ -296,7 +296,15 @@ class GameState: ObservableObject {
         }
     }
 
-    func reset() {
+    func resetQuiz() {
+        currentPhase = .splash
+        score = 0
+        totalQuestions = 0
+        answeredScenarios = [:]
+        learnPhasesCompleted = []
+    }
+
+    func resetAll() {
         currentPhase = .splash
         score = 0
         totalQuestions = 0
