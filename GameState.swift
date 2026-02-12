@@ -117,6 +117,7 @@ class GameState: ObservableObject {
 
     init() {
         loadChecklistState()
+        shuffleQuiz()
     }
 
     private func stableKey(categoryTitle: String, itemTitle: String) -> String {
@@ -236,7 +237,7 @@ class GameState: ObservableObject {
         )
     ]
 
-    let scenarios: [SimulationScenario] = [
+    private static let allScenarios: [SimulationScenario] = [
         SimulationScenario(
             situation: "You're in a classroom on the 3rd floor when strong shaking begins. What do you do?",
             options: [
@@ -289,6 +290,18 @@ class GameState: ObservableObject {
         )
     ]
 
+    @Published var scenarios: [SimulationScenario] = []
+
+    func shuffleQuiz() {
+        scenarios = Self.allScenarios.shuffled().map { scenario in
+            SimulationScenario(
+                situation: scenario.situation,
+                options: scenario.options.shuffled(),
+                explanation: scenario.explanation
+            )
+        }
+    }
+
     func tipsFor(phase: EarthquakePhase) -> [SafetyTip] {
         safetyTips.filter { $0.phase == phase }
     }
@@ -310,6 +323,7 @@ class GameState: ObservableObject {
         totalQuestions = 0
         answeredScenarios = [:]
         learnPhasesCompleted = []
+        shuffleQuiz()
     }
 
     func resetKitBuilder() {
@@ -329,6 +343,7 @@ class GameState: ObservableObject {
         hasCompletedStory = false
         checklistCategories = ChecklistData.allCategories()
         UserDefaults.standard.removeObject(forKey: Self.checklistKey)
+        shuffleQuiz()
     }
 
     var scorePercentage: Double {

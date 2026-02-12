@@ -91,6 +91,7 @@ struct SimulationView: View {
         .onAppear {
             guard !hasAppeared else { return }
             hasAppeared = true
+            gameState.shuffleQuiz()
             hapticManager.playEarthquakeSimulation()
             soundManager.playEarthquakeRumble()
             startTimer()
