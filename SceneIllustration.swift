@@ -423,11 +423,14 @@ struct SceneIllustration: View {
 
             // Rubble at base
             HStack(spacing: 4) {
-                ForEach(0..<5, id: \.self) { _ in
+                ForEach(0..<5, id: \.self) { i in
+                    let widths: [CGFloat] = [10, 14, 8, 12, 11]
+                    let heights: [CGFloat] = [6, 9, 5, 8, 7]
+                    let rotations: [Double] = [-15, 20, -5, 25, -20]
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
-                        .frame(width: CGFloat.random(in: 8...15), height: CGFloat.random(in: 5...10))
-                        .rotationEffect(.degrees(Double.random(in: -30...30)))
+                        .frame(width: widths[i], height: heights[i])
+                        .rotationEffect(.degrees(rotations[i]))
                 }
             }
             .offset(y: 55)
