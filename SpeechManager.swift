@@ -11,12 +11,7 @@ final class SpeechManager: NSObject, ObservableObject {
     override init() {
         super.init()
         synthesizer.delegate = self
-        synthesizer.usesApplicationAudioSession = true
-
-        // Pre-warm synthesizer to avoid first-use lag
-        let warmup = AVSpeechUtterance(string: " ")
-        warmup.volume = 0
-        synthesizer.speak(warmup)
+        synthesizer.usesApplicationAudioSession = false
     }
 
     func speak(
