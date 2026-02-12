@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Bag Frame Preference Key
 
 private struct BagFramePreferenceKey: PreferenceKey {
-    static var defaultValue: CGRect = .zero
+    static let defaultValue: CGRect = .zero
     static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
         value = nextValue()
     }
