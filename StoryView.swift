@@ -393,7 +393,7 @@ struct StoryView: View {
             "September 19, 2017. Mexico City. Story about the earthquake."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
             advanceToSlide(1)
             showDrillText = true
             showDrillSubtitle = true
@@ -403,7 +403,7 @@ struct StoryView: View {
             )
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8.5) {
             advanceToSlide(2)
             typewriterText = fullTypewriterText
             showStrikeSubtitle = true
@@ -412,7 +412,7 @@ struct StoryView: View {
             )
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 14.5) {
             advanceToSlide(3)
             deathCount = 370
             showBuildings = true
@@ -422,7 +422,7 @@ struct StoryView: View {
             )
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 21.5) {
             advanceToSlide(4)
             showSecondsText = true
             showSecondsSubtitle = true
@@ -431,7 +431,7 @@ struct StoryView: View {
             )
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 18.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 26.5) {
             advanceToSlide(5)
             hopefulGradient = true
             showCallToAction = true
@@ -463,7 +463,7 @@ struct StoryView: View {
             "September 19, 2017. Mexico City."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
             startSlideTwo()
         }
     }
@@ -493,7 +493,7 @@ struct StoryView: View {
             "That morning, millions practiced an earthquake drill."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             startSlideThree()
         }
     }
@@ -541,7 +541,7 @@ struct StoryView: View {
             "1:14 PM. Without warning. A 7.1 magnitude earthquake struck."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
             startSlideFour()
         }
     }
@@ -581,7 +581,7 @@ struct StoryView: View {
             "The impact. 370 lives lost. 44 buildings collapsed. Over 6000 people injured."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) {
             startSlideFive()
         }
     }
@@ -609,7 +609,7 @@ struct StoryView: View {
             "The strong shaking lasted just 20 seconds. But those 20 seconds changed everything."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             startSlideSix()
         }
     }
