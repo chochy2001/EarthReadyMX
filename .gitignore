@@ -16,9 +16,6 @@ DerivedData/
 *.swp
 *~
 
-# Assets catalog breaks App Playground loading
-Assets.xcassets/
-
 # Spurious files
 --db-path
 
