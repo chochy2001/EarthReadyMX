@@ -1,14 +1,5 @@
 import SwiftUI
 
-// MARK: - Bag Frame Preference Key
-
-private struct BagFramePreferenceKey: PreferenceKey {
-    static let defaultValue: CGRect = .zero
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        value = nextValue()
-    }
-}
-
 // MARK: - Kit Builder View
 
 struct KitBuilderView: View {
@@ -22,12 +13,12 @@ struct KitBuilderView: View {
     @State private var bagContents: Set<UUID> = []
     @State private var score: Int = 0
     @State private var essentialsFound: Int = 0
-    @State private var bagFrame: CGRect = .zero
     @State private var feedbackItem: KitItem?
     @State private var feedbackIsCorrect: Bool = true
     @State private var showResults: Bool = false
     @State private var showIntro: Bool = true
     @State private var wrongItemShake: UUID?
+    @State private var isDropTargeted: Bool = false
 
     private let totalEssentials = 10
 
@@ -52,7 +43,6 @@ struct KitBuilderView: View {
                     resultsOverlay
                 } else {
                     VStack(spacing: 0) {
-                        // Back button
                         HStack {
                             Button(action: {
                                 withAnimation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.7)) {
@@ -73,22 +63,31 @@ struct KitBuilderView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
 
-                        // TOP: Scrollable items
                         ScrollView {
                             VStack(spacing: 16) {
                                 headerSection
 
+                                Text("Tap an item or drag it to the backpack")
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundColor(.gray)
+
                                 LazyVGrid(columns: columns, spacing: 14) {
                                     ForEach(items) { item in
-                                        DraggableKitItem(
+                                        KitItemCell(
                                             item: item,
                                             isInBag: bagContents.contains(item.id),
-                                            bagFrame: $bagFrame,
                                             wrongItemShake: $wrongItemShake,
                                             reduceMotion: reduceMotion,
-                                            differentiateWithoutColor: differentiateWithoutColor,
-                                            onDrop: { handleDrop(item: item) }
+                                            differentiateWithoutColor: differentiateWithoutColor
                                         )
+                                        .onTapGesture {
+                                            if !bagContents.contains(item.id) {
+                                                handleDrop(item: item)
+                                            }
+                                        }
+                                        .draggable(item.id.uuidString) {
+                                            KitItemDragPreview(item: item)
+                                        }
                                     }
                                 }
                                 .padding(.horizontal, 16)
@@ -99,24 +98,26 @@ struct KitBuilderView: View {
                             .frame(maxWidth: .infinity)
                         }
 
-                        // BOTTOM: Backpack drop target (FIXED, always visible)
                         VStack(spacing: 12) {
                             BackpackDropTarget(
                                 itemCount: bagContents.count,
-                                reduceMotion: reduceMotion
+                                reduceMotion: reduceMotion,
+                                isTargeted: isDropTargeted
                             )
                             .padding(.horizontal, 16)
-                            .background(
-                                GeometryReader { bagGeometry in
-                                    Color.clear
-                                        .preference(
-                                            key: BagFramePreferenceKey.self,
-                                            value: bagGeometry.frame(in: .global)
-                                        )
+                            .dropDestination(for: String.self) { droppedItems, _ in
+                                for idString in droppedItems {
+                                    if let uuid = UUID(uuidString: idString),
+                                       let item = items.first(where: { $0.id == uuid }),
+                                       !bagContents.contains(uuid) {
+                                        handleDrop(item: item)
+                                    }
                                 }
-                            )
-                            .onPreferenceChange(BagFramePreferenceKey.self) { frame in
-                                bagFrame = frame
+                                return true
+                            } isTargeted: { targeted in
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    isDropTargeted = targeted
+                                }
                             }
 
                             if bagContents.count >= 5 {
@@ -160,7 +161,7 @@ struct KitBuilderView: View {
         .onAppear {
             items = KitBuilderData.itemsForSession()
             AccessibilityAnnouncement.announceScreenChange(
-                "Emergency Kit Builder. Drag essential items into your backpack. \(items.count) items to choose from."
+                "Emergency Kit Builder. Tap items or drag them into your backpack. \(items.count) items to choose from."
             )
         }
     }
@@ -529,19 +530,14 @@ struct KitBuilderView: View {
     }
 }
 
-// MARK: - Draggable Kit Item
+// MARK: - Kit Item Cell
 
-private struct DraggableKitItem: View {
+private struct KitItemCell: View {
     let item: KitItem
     let isInBag: Bool
-    @Binding var bagFrame: CGRect
     @Binding var wrongItemShake: UUID?
     let reduceMotion: Bool
     let differentiateWithoutColor: Bool
-    let onDrop: () -> Void
-
-    @State private var dragOffset: CGSize = .zero
-    @State private var isDragging: Bool = false
 
     var body: some View {
         VStack(spacing: 6) {
@@ -589,71 +585,43 @@ private struct DraggableKitItem: View {
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(isDragging ? 0.12 : 0.04))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(
-                    isDragging ? Color.orange.opacity(0.5) : Color.clear,
-                    lineWidth: 1.5
-                )
+                .fill(Color.white.opacity(0.04))
         )
         .opacity(isInBag ? 0.5 : 1.0)
-        .scaleEffect(isDragging ? 1.1 : 1.0)
-        .offset(dragOffset)
         .modifier(
             ShakeEffect(
                 animatableData: wrongItemShake == item.id ? 1 : 0
             )
         )
         .animation(
-            reduceMotion ? .none : .spring(response: 0.3, dampingFraction: 0.6),
-            value: isDragging
-        )
-        .animation(
             reduceMotion ? .none : .default,
             value: wrongItemShake
         )
-        .gesture(
-            isInBag
-                ? nil
-                : LongPressGesture(minimumDuration: 0.3)
-                    .sequenced(before: DragGesture(coordinateSpace: .global))
-                    .onChanged { value in
-                        switch value {
-                        case .first(true):
-                            isDragging = true
-                        case .second(true, let drag):
-                            if let drag = drag {
-                                dragOffset = drag.translation
-                            }
-                        default:
-                            break
-                        }
-                    }
-                    .onEnded { value in
-                        isDragging = false
-                        if case .second(true, let drag) = value,
-                           let dragValue = drag {
-                            let expandedBagFrame = bagFrame.insetBy(dx: -40, dy: -40)
-                            if expandedBagFrame.contains(dragValue.location) {
-                                onDrop()
-                            }
-                        }
-                        withAnimation(reduceMotion ? .none : .spring(response: 0.4, dampingFraction: 0.7)) {
-                            dragOffset = .zero
-                        }
-                    }
-        )
+        .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(item.name)
         .accessibilityValue(isInBag ? "In backpack" : "Not in backpack")
         .accessibilityHint(isInBag ? "Already added to your kit" : "Double tap to add to your emergency kit")
-        .accessibilityAction(named: "Add to Kit") {
-            if !isInBag {
-                onDrop()
-            }
+    }
+}
+
+// MARK: - Drag Preview
+
+private struct KitItemDragPreview: View {
+    let item: KitItem
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: item.icon)
+                .font(.system(.body))
+            Text(item.name)
+                .font(.system(.caption, design: .rounded, weight: .semibold))
         }
+        .foregroundColor(.white)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.orange.opacity(0.9))
+        .clipShape(Capsule())
     }
 }
 
@@ -662,17 +630,18 @@ private struct DraggableKitItem: View {
 private struct BackpackDropTarget: View {
     let itemCount: Int
     let reduceMotion: Bool
+    var isTargeted: Bool = false
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.orange.opacity(0.12))
+                .fill(Color.orange.opacity(isTargeted ? 0.25 : 0.12))
 
             RoundedRectangle(cornerRadius: 20)
                 .strokeBorder(
-                    style: StrokeStyle(lineWidth: 2.5, dash: [8, 6])
+                    style: StrokeStyle(lineWidth: isTargeted ? 3.0 : 2.5, dash: [8, 6])
                 )
-                .foregroundColor(.orange.opacity(0.5))
+                .foregroundColor(.orange.opacity(isTargeted ? 0.9 : 0.5))
 
             VStack(spacing: 8) {
                 ZStack {
@@ -698,12 +667,14 @@ private struct BackpackDropTarget: View {
                     }
                 }
 
-                Text("Drop items here")
+                Text(isTargeted ? "Release to add!" : "Drop items here")
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundColor(.orange.opacity(0.8))
             }
         }
         .frame(height: 120)
+        .scaleEffect(isTargeted ? 1.05 : 1.0)
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.2), value: isTargeted)
         .modifier(GlowEffect(color: .orange))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Backpack drop zone")
