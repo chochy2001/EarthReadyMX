@@ -301,6 +301,7 @@ struct ResultView: View {
             .foregroundColor(isCompleted ? .black : colors[0])
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
+            .padding(.horizontal, 16)
             .background(
                 Group {
                     if isCompleted {

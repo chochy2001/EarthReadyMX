@@ -422,6 +422,24 @@ struct KitBuilderView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                     .accessibilityHint("Double tap to restart the kit builder game")
+
+                    Button(action: {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                            gameState.currentPhase = .result
+                        }
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.left")
+                            Text("Back to Results")
+                                .font(.system(.footnote, design: .rounded, weight: .semibold))
+                        }
+                        .foregroundColor(.white.opacity(0.7))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.white.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                    .accessibilityHint("Double tap to return to results")
                 }
                 .padding(.horizontal, 20)
 
