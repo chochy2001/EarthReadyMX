@@ -176,68 +176,65 @@ struct ResultView: View {
 
     private var actionsSection: some View {
         VStack(spacing: 12) {
-            // Primary: Learn Safety Protocols
-            Button(action: {
+            sectionButton(
+                title: "Learn Safety Protocols",
+                icon: "shield.lefthalf.filled",
+                colors: [.orange, .yellow],
+                isCompleted: gameState.isLearnCompleted,
+                hint: "Double tap to learn earthquake safety protocols"
+            ) {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.currentPhase = .learn
                 }
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "shield.lefthalf.filled")
-                    Text("Learn Safety Protocols")
-                        .font(.system(.callout, design: .rounded, weight: .bold))
-                }
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .accessibilityHint("Double tap to learn earthquake safety protocols")
 
-            // Secondary: Build Your Kit
-            Button(action: {
+            sectionButton(
+                title: "Build Your Kit",
+                icon: "bag.fill",
+                colors: [.green, .mint],
+                isCompleted: gameState.isKitCompleted,
+                hint: "Double tap to build your emergency kit"
+            ) {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.currentPhase = .kitBuilder
                 }
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "bag.fill")
-                    Text("Build Your Kit")
-                        .font(.system(.callout, design: .rounded, weight: .bold))
-                }
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .accessibilityHint("Double tap to build your emergency kit by dragging items into a backpack")
 
-            // Secondary: Practice Drill
-            Button(action: {
+            sectionButton(
+                title: "Practice Drill",
+                icon: "figure.walk",
+                colors: [.cyan, .blue],
+                isCompleted: gameState.isDrillCompleted,
+                hint: "Double tap to start a guided earthquake drill"
+            ) {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.currentPhase = .drill
                 }
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "figure.walk")
-                    Text("Practice Drill")
-                        .font(.system(.callout, design: .rounded, weight: .bold))
-                }
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    LinearGradient(colors: [.cyan, .blue], startPoint: .leading, endPoint: .trailing)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .accessibilityHint("Double tap to start a guided earthquake drill with voice instructions")
+
+            sectionButton(
+                title: "Seismic Zones",
+                icon: "map.fill",
+                colors: [.purple, .indigo],
+                isCompleted: gameState.isSeismicZonesCompleted,
+                hint: "Double tap to explore seismic zones"
+            ) {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    gameState.currentPhase = .seismicZone
+                }
+            }
+
+            sectionButton(
+                title: "Room Safety Scanner",
+                icon: "camera.viewfinder",
+                colors: [.pink, .red],
+                isCompleted: gameState.isRoomScannerCompleted,
+                hint: "Double tap to scan a room for safety hazards"
+            ) {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    gameState.currentPhase = .roomScanner
+                }
+            }
 
             // Tertiary: Go to Checklist
             Button(action: {
@@ -279,6 +276,59 @@ struct ResultView: View {
             .accessibilityHint("Double tap to restart the app from the beginning")
         }
         .padding(.horizontal, 20)
+    }
+
+    @ViewBuilder
+    private func sectionButton(
+        title: String,
+        icon: String,
+        colors: [Color],
+        isCompleted: Bool,
+        hint: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                Text(title)
+                    .font(.system(.callout, design: .rounded, weight: .bold))
+                if isCompleted {
+                    Spacer()
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(.body))
+                }
+            }
+            .foregroundColor(isCompleted ? .black : colors[0])
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                Group {
+                    if isCompleted {
+                        LinearGradient(
+                            colors: colors,
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    } else {
+                        Color.clear
+                    }
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(
+                        LinearGradient(
+                            colors: colors,
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        lineWidth: isCompleted ? 0 : 2
+                    )
+            )
+        }
+        .accessibilityLabel("\(title)\(isCompleted ? ", completed" : "")")
+        .accessibilityHint(hint)
     }
 
     private func takeawayItem(icon: String, color: Color, title: String, text: String) -> some View {

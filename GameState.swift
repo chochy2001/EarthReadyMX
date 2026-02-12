@@ -9,6 +9,8 @@ enum AppPhase: Equatable, Sendable {
     case kitBuilder
     case checklist
     case drill
+    case seismicZone
+    case roomScanner
     case completion
 }
 
@@ -110,13 +112,18 @@ class GameState: ObservableObject {
     @Published var kitEssentialsFound: Int = 0
     @Published var drillCompleted: Bool = false
     @Published var hasCompletedStory: Bool = false
+    @Published var seismicZonesVisited: Bool = false
+    @Published var roomScannerUsed: Bool = false
 
     // MARK: - Persistence
     private static let checklistKey = "checklist_completed_items"
     private static let bestScoreKey = "best_quiz_score"
+    private static let seismicZonesKey = "seismic_zones_visited"
+    private static let roomScannerKey = "room_scanner_used"
 
     init() {
         loadChecklistState()
+        loadCompletionState()
         shuffleQuiz()
     }
 
@@ -148,6 +155,16 @@ class GameState: ObservableObject {
                 }
             }
         }
+    }
+
+    private func saveCompletionState() {
+        UserDefaults.standard.set(seismicZonesVisited, forKey: Self.seismicZonesKey)
+        UserDefaults.standard.set(roomScannerUsed, forKey: Self.roomScannerKey)
+    }
+
+    private func loadCompletionState() {
+        seismicZonesVisited = UserDefaults.standard.bool(forKey: Self.seismicZonesKey)
+        roomScannerUsed = UserDefaults.standard.bool(forKey: Self.roomScannerKey)
     }
 
     func saveBestScoreIfNeeded() {
@@ -341,8 +358,12 @@ class GameState: ObservableObject {
         kitEssentialsFound = 0
         drillCompleted = false
         hasCompletedStory = false
+        seismicZonesVisited = false
+        roomScannerUsed = false
         checklistCategories = ChecklistData.allCategories()
         UserDefaults.standard.removeObject(forKey: Self.checklistKey)
+        UserDefaults.standard.removeObject(forKey: Self.seismicZonesKey)
+        UserDefaults.standard.removeObject(forKey: Self.roomScannerKey)
         shuffleQuiz()
     }
 
@@ -370,6 +391,30 @@ class GameState: ObservableObject {
         Int(checklistProgress * 100)
     }
 
+    var isLearnCompleted: Bool {
+        learnPhasesCompleted.count == EarthquakePhase.allCases.count
+    }
+
+    var isKitCompleted: Bool {
+        kitEssentialsFound >= 10
+    }
+
+    var isDrillCompleted: Bool {
+        drillCompleted
+    }
+
+    var isSeismicZonesCompleted: Bool {
+        seismicZonesVisited
+    }
+
+    var isRoomScannerCompleted: Bool {
+        roomScannerUsed
+    }
+
+    var isChecklistCompleted: Bool {
+        checklistPercentage == 100
+    }
+
     func toggleChecklistItem(categoryId: UUID, itemId: UUID) {
         guard let catIndex = checklistCategories.firstIndex(where: { $0.id == categoryId }),
               let itemIndex = checklistCategories[catIndex].items.firstIndex(where: { $0.id == itemId }) else {
@@ -377,6 +422,32 @@ class GameState: ObservableObject {
         }
         checklistCategories[catIndex].items[itemIndex].isCompleted.toggle()
         saveChecklistState()
+    }
+
+    func toggleChecklistGroup(categoryId: UUID, priority: ChecklistPriority) {
+        guard let catIndex = checklistCategories.firstIndex(where: { $0.id == categoryId }) else {
+            return
+        }
+        let priorityItems = checklistCategories[catIndex].items.enumerated()
+            .filter { $0.element.priority == priority }
+        let allCompleted = priorityItems.allSatisfy { $0.element.isCompleted }
+
+        for (index, _) in priorityItems {
+            checklistCategories[catIndex].items[index].isCompleted = !allCompleted
+        }
+        saveChecklistState()
+    }
+
+    func markSeismicZonesVisited() {
+        guard !seismicZonesVisited else { return }
+        seismicZonesVisited = true
+        saveCompletionState()
+    }
+
+    func markRoomScannerUsed() {
+        guard !roomScannerUsed else { return }
+        roomScannerUsed = true
+        saveCompletionState()
     }
 
     var checklistMotivationalMessage: String {

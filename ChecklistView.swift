@@ -367,7 +367,7 @@ struct ChecklistView: View {
                     ForEach(ChecklistPriority.allCases, id: \.self) { priority in
                         let items = currentCategory.items.filter { $0.priority == priority }
                         if !items.isEmpty {
-                            prioritySectionHeader(priority)
+                            prioritySectionHeader(priority, category: currentCategory)
                                 .padding(.top, priority == .critical ? 8 : 16)
 
                             ForEach(items) { item in
@@ -398,7 +398,9 @@ struct ChecklistView: View {
     }
 
     @ViewBuilder
-    private func prioritySectionHeader(_ priority: ChecklistPriority) -> some View {
+    private func prioritySectionHeader(_ priority: ChecklistPriority, category: ChecklistCategory) -> some View {
+        let priorityItems = category.items.filter { $0.priority == priority }
+        let allCompleted = priorityItems.allSatisfy { $0.isCompleted }
         HStack(spacing: 6) {
             if differentiateWithoutColor {
                 Image(systemName: priority.icon)
@@ -414,6 +416,20 @@ struct ChecklistView: View {
                 .foregroundColor(priority.color.opacity(0.8))
                 .tracking(1)
             Spacer()
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    gameState.toggleChecklistGroup(
+                        categoryId: category.id,
+                        priority: priority
+                    )
+                }
+                hapticManager.playCorrectAnswer()
+            }) {
+                Text(allCompleted ? "Uncheck All" : "Check All")
+                    .font(.system(.caption2, design: .rounded, weight: .semibold))
+                    .foregroundColor(priority.color.opacity(0.7))
+            }
+            .accessibilityLabel(allCompleted ? "Uncheck all \(priority.label) items" : "Check all \(priority.label) items")
         }
         .accessibilityLabel("\(priority.label) priority items")
         .accessibilityAddTraits(.isHeader)
