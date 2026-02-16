@@ -40,7 +40,7 @@ let package = Package(
         .executableTarget(
             name: "AppModule",
             path: ".",
-            exclude: ["docs", "README.md", "~", "SupportingInfo.plist"]
+            exclude: ["docs", "README.md", "SupportingInfo.plist"]
         )
     ],
     swiftLanguageModes: [.v6]

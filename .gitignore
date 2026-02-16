@@ -21,3 +21,5 @@ DerivedData/
 
 # Claude Code artifacts
 ~/
+
+project.xcworkspace/
