@@ -1,0 +1,10 @@
+[allowlist]
+description = "Allowlist for known safe patterns (Swift Playground)"
+paths = [
+  '''(^|/)\.build(/|$)''',
+  '''(^|/)DerivedData(/|$)''',
+  '''(^|/)xcuserdata(/|$)''',
+  '''(^|/)\.swiftpm/xcode(/|$)''',
+  '''(^|/)Package\.resolved$''',
+  '''(^|/)\.DS_Store$''',
+]
