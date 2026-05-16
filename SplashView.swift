@@ -16,6 +16,7 @@ struct SplashView: View {
     @State private var isShaking = false
     @State private var seismographTimer: Timer?
     @State private var viewSize: CGSize = .zero
+    @State private var showAppearanceSheet = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -158,6 +159,30 @@ struct SplashView: View {
             }
             .frame(maxWidth: 600)
             .frame(maxWidth: .infinity)
+
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        showAppearanceSheet = true
+                    } label: {
+                        Image(systemName: "paintpalette")
+                            .font(.title3)
+                            .foregroundColor(.white.opacity(0.7))
+                            .padding(12)
+                            .background(Color.white.opacity(0.08))
+                            .clipShape(Circle())
+                    }
+                    .accessibilityLabel("Appearance")
+                    .accessibilityHint("Choose between system, light or dark mode")
+                    .padding(.trailing, 20)
+                    .padding(.top, 20)
+                }
+                Spacer()
+            }
+        }
+        .sheet(isPresented: $showAppearanceSheet) {
+            AppearanceSettingsSheet()
         }
         .onAppear {
             viewSize = geometry.size
