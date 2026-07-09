@@ -1,4 +1,5 @@
 import SwiftUI
+import EarthReadyCore
 
 struct ChecklistView: View {
     @EnvironmentObject var gameState: GameState

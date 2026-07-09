@@ -6,16 +6,16 @@ import SwiftUI
 /// and seismic alerts), so the default remains `system` so the OS setting
 /// wins. Users who prefer a light interface can opt in from the splash
 /// settings menu.
-enum AppearancePreference: String, CaseIterable, Identifiable {
+public enum AppearancePreference: String, CaseIterable, Identifiable, Sendable {
     case system
     case light
     case dark
 
-    static let storageKey = "colorScheme"
+    public static let storageKey = "colorScheme"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var colorScheme: ColorScheme? {
+    public var colorScheme: ColorScheme? {
         switch self {
         case .system: return nil
         case .light: return .light
@@ -23,7 +23,7 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
         }
     }
 
-    var label: String {
+    public var label: String {
         switch self {
         case .system: return "System"
         case .light: return "Light"
@@ -31,7 +31,7 @@ enum AppearancePreference: String, CaseIterable, Identifiable {
         }
     }
 
-    var iconName: String {
+    public var iconName: String {
         switch self {
         case .system: return "circle.lefthalf.filled"
         case .light: return "sun.max"

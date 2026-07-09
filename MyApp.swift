@@ -1,4 +1,5 @@
 import SwiftUI
+import EarthReadyCore
 
 @main
 struct MyApp: App {

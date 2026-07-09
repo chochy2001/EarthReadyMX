@@ -1,20 +1,20 @@
 import Foundation
 
-enum KitItemCategory: Sendable {
+public enum KitItemCategory: Sendable {
     case essential
     case dangerous
     case distractor
 }
 
-struct KitItem: Identifiable, Sendable {
-    let id: UUID
-    let icon: String
-    let name: String
-    let explanation: String
-    let category: KitItemCategory
-    let points: Int
+public struct KitItem: Identifiable, Sendable {
+    public let id: UUID
+    public let icon: String
+    public let name: String
+    public let explanation: String
+    public let category: KitItemCategory
+    public let points: Int
 
-    init(
+    public init(
         id: UUID = UUID(),
         icon: String,
         name: String,
@@ -31,17 +31,17 @@ struct KitItem: Identifiable, Sendable {
     }
 }
 
-enum KitBuilderData {
+public enum KitBuilderData {
 
     // MARK: - All Items
 
-    static func allItems() -> [KitItem] {
+    public static func allItems() -> [KitItem] {
         essentialItems() + dangerousItems() + distractorItems()
     }
 
     // MARK: - Essential Items (correct for emergency kit)
 
-    static func essentialItems() -> [KitItem] {
+    public static func essentialItems() -> [KitItem] {
         [
             KitItem(
                 icon: "drop.fill",
@@ -118,7 +118,7 @@ enum KitBuilderData {
 
     // MARK: - Dangerous Items (wrong for emergency kit)
 
-    static func dangerousItems() -> [KitItem] {
+    public static func dangerousItems() -> [KitItem] {
         [
             KitItem(
                 icon: "flame.fill",
@@ -167,7 +167,7 @@ enum KitBuilderData {
 
     // MARK: - Distractor Items (plausible but not priority)
 
-    static func distractorItems() -> [KitItem] {
+    public static func distractorItems() -> [KitItem] {
         [
             KitItem(
                 icon: "sunglasses.fill",
@@ -195,7 +195,7 @@ enum KitBuilderData {
 
     /// Returns a shuffled selection of items for a game session.
     /// Always includes all 10 essential items plus a random selection of dangerous/distractor items.
-    static func itemsForSession() -> [KitItem] {
+    public static func itemsForSession() -> [KitItem] {
         let essentials = essentialItems()
         let nonEssentials = dangerousItems() + distractorItems()
         let selectedNonEssentials = Array(nonEssentials.shuffled().prefix(6))

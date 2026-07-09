@@ -1,4 +1,5 @@
 import SwiftUI
+import EarthReadyCore
 
 struct SplashView: View {
     @EnvironmentObject var gameState: GameState

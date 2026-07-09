@@ -1,4 +1,5 @@
 import SwiftUI
+import EarthReadyCore
 import UIKit
 
 // MARK: - Shareable Achievement Card

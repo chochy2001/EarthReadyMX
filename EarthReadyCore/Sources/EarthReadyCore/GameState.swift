@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum AppPhase: Equatable, Sendable {
+public enum AppPhase: Equatable, Sendable {
     case splash
     case story
     case learn
@@ -16,12 +16,12 @@ enum AppPhase: Equatable, Sendable {
 
 // MARK: - Checklist Models
 
-enum ChecklistPriority: Int, CaseIterable, Sendable {
+public enum ChecklistPriority: Int, CaseIterable, Sendable {
     case critical = 0
     case important = 1
     case recommended = 2
 
-    var label: String {
+    public var label: String {
         switch self {
         case .critical: return "Critical"
         case .important: return "Important"
@@ -29,7 +29,7 @@ enum ChecklistPriority: Int, CaseIterable, Sendable {
         }
     }
 
-    var color: Color {
+    public var color: Color {
         switch self {
         case .critical: return .red
         case .important: return .orange
@@ -37,7 +37,7 @@ enum ChecklistPriority: Int, CaseIterable, Sendable {
         }
     }
 
-    var icon: String {
+    public var icon: String {
         switch self {
         case .critical: return "exclamationmark.triangle.fill"
         case .important: return "exclamationmark.circle.fill"
@@ -46,74 +46,109 @@ enum ChecklistPriority: Int, CaseIterable, Sendable {
     }
 }
 
-struct ChecklistItem: Identifiable, Sendable {
-    let id = UUID()
-    let icon: String
-    let title: String
-    let description: String
-    let priority: ChecklistPriority
-    var isCompleted: Bool = false
+public struct ChecklistItem: Identifiable, Sendable {
+    public let id = UUID()
+    public let icon: String
+    public let title: String
+    public let description: String
+    public let priority: ChecklistPriority
+    public var isCompleted: Bool = false
+
+    public init(icon: String, title: String, description: String, priority: ChecklistPriority, isCompleted: Bool = false) {
+        self.icon = icon
+        self.title = title
+        self.description = description
+        self.priority = priority
+        self.isCompleted = isCompleted
+    }
 }
 
-struct ChecklistCategory: Identifiable, Sendable {
-    let id = UUID()
-    let icon: String
-    let title: String
-    let subtitle: String
-    let color: Color
-    let gradientColors: [Color]
-    var items: [ChecklistItem]
+public struct ChecklistCategory: Identifiable, Sendable {
+    public let id = UUID()
+    public let icon: String
+    public let title: String
+    public let subtitle: String
+    public let color: Color
+    public let gradientColors: [Color]
+    public var items: [ChecklistItem]
 
-    var completedCount: Int { items.filter(\.isCompleted).count }
-    var totalCount: Int { items.count }
-    var progress: Double {
+    public init(icon: String, title: String, subtitle: String, color: Color, gradientColors: [Color], items: [ChecklistItem]) {
+        self.icon = icon
+        self.title = title
+        self.subtitle = subtitle
+        self.color = color
+        self.gradientColors = gradientColors
+        self.items = items
+    }
+
+    public var completedCount: Int { items.filter(\.isCompleted).count }
+    public var totalCount: Int { items.count }
+    public var progress: Double {
         guard totalCount > 0 else { return 0 }
         return Double(completedCount) / Double(totalCount)
     }
-    var isComplete: Bool { completedCount == totalCount }
+    public var isComplete: Bool { completedCount == totalCount }
 }
 
-enum EarthquakePhase: String, CaseIterable, Sendable {
+public enum EarthquakePhase: String, CaseIterable, Sendable {
     case before = "Before"
     case during = "During"
     case after = "After"
 }
 
-struct SafetyTip: Identifiable, Sendable {
-    let id = UUID()
-    let icon: String
-    let title: String
-    let description: String
-    let phase: EarthquakePhase
+public struct SafetyTip: Identifiable, Sendable {
+    public let id = UUID()
+    public let icon: String
+    public let title: String
+    public let description: String
+    public let phase: EarthquakePhase
+
+    public init(icon: String, title: String, description: String, phase: EarthquakePhase) {
+        self.icon = icon
+        self.title = title
+        self.description = description
+        self.phase = phase
+    }
 }
 
-struct SimulationScenario: Identifiable, Sendable {
-    let id = UUID()
-    let situation: String
-    let options: [SimulationOption]
-    let explanation: String
+public struct SimulationScenario: Identifiable, Sendable {
+    public let id = UUID()
+    public let situation: String
+    public let options: [SimulationOption]
+    public let explanation: String
+
+    public init(situation: String, options: [SimulationOption], explanation: String) {
+        self.situation = situation
+        self.options = options
+        self.explanation = explanation
+    }
 }
 
-struct SimulationOption: Identifiable, Sendable {
-    let id = UUID()
-    let text: String
-    let isCorrect: Bool
+public struct SimulationOption: Identifiable, Sendable {
+    public let id = UUID()
+    public let text: String
+    public let isCorrect: Bool
+
+    public init(text: String, isCorrect: Bool) {
+        self.text = text
+        self.isCorrect = isCorrect
+    }
 }
 
 @MainActor
-class GameState: ObservableObject {
-    @Published var currentPhase: AppPhase = .splash
-    @Published var score: Int = 0
-    @Published var totalQuestions: Int = 0
-    @Published var answeredScenarios: [UUID: Bool] = [:]
-    @Published var learnPhasesCompleted: Set<EarthquakePhase> = []
-    @Published var checklistCategories: [ChecklistCategory] = ChecklistData.allCategories()
-    @Published var kitScore: Int = 0
-    @Published var kitEssentialsFound: Int = 0
-    @Published var drillCompleted: Bool = false
-    @Published var hasCompletedStory: Bool = false
-    @Published var seismicZonesVisited: Bool = false
-    @Published var roomScannerUsed: Bool = false
+public class GameState: ObservableObject {
+    @Published public var currentPhase: AppPhase = .splash
+    @Published public var score: Int = 0
+    @Published public var totalQuestions: Int = 0
+    @Published public var answeredScenarios: [UUID: Bool] = [:]
+    @Published public var learnPhasesCompleted: Set<EarthquakePhase> = []
+    @Published public var checklistCategories: [ChecklistCategory] = ChecklistData.allCategories()
+    @Published public var kitScore: Int = 0
+    @Published public var kitEssentialsFound: Int = 0
+    @Published public var drillCompleted: Bool = false
+    @Published public var hasCompletedStory: Bool = false
+    @Published public var seismicZonesVisited: Bool = false
+    @Published public var roomScannerUsed: Bool = false
 
     // MARK: - Persistence
     private static let checklistKey = "checklist_completed_items"
@@ -121,7 +156,10 @@ class GameState: ObservableObject {
     private static let seismicZonesKey = "seismic_zones_visited"
     private static let roomScannerKey = "room_scanner_used"
 
-    init() {
+    private let defaults: UserDefaults
+
+    public init(userDefaults: UserDefaults = .standard) {
+        self.defaults = userDefaults
         loadChecklistState()
         loadCompletionState()
         shuffleQuiz()
@@ -131,18 +169,18 @@ class GameState: ObservableObject {
         "\(categoryTitle)::\(itemTitle)"
     }
 
-    func saveChecklistState() {
+    public func saveChecklistState() {
         var completedKeys: [String] = []
         for category in checklistCategories {
             for item in category.items where item.isCompleted {
                 completedKeys.append(stableKey(categoryTitle: category.title, itemTitle: item.title))
             }
         }
-        UserDefaults.standard.set(completedKeys, forKey: Self.checklistKey)
+        defaults.set(completedKeys, forKey: Self.checklistKey)
     }
 
-    func loadChecklistState() {
-        guard let completedKeys = UserDefaults.standard.stringArray(forKey: Self.checklistKey) else { return }
+    public func loadChecklistState() {
+        guard let completedKeys = defaults.stringArray(forKey: Self.checklistKey) else { return }
         let completedSet = Set(completedKeys)
         for catIndex in checklistCategories.indices {
             for itemIndex in checklistCategories[catIndex].items.indices {
@@ -158,28 +196,28 @@ class GameState: ObservableObject {
     }
 
     private func saveCompletionState() {
-        UserDefaults.standard.set(seismicZonesVisited, forKey: Self.seismicZonesKey)
-        UserDefaults.standard.set(roomScannerUsed, forKey: Self.roomScannerKey)
+        defaults.set(seismicZonesVisited, forKey: Self.seismicZonesKey)
+        defaults.set(roomScannerUsed, forKey: Self.roomScannerKey)
     }
 
     private func loadCompletionState() {
-        seismicZonesVisited = UserDefaults.standard.bool(forKey: Self.seismicZonesKey)
-        roomScannerUsed = UserDefaults.standard.bool(forKey: Self.roomScannerKey)
+        seismicZonesVisited = defaults.bool(forKey: Self.seismicZonesKey)
+        roomScannerUsed = defaults.bool(forKey: Self.roomScannerKey)
     }
 
-    func saveBestScoreIfNeeded() {
-        let currentBest = UserDefaults.standard.integer(forKey: Self.bestScoreKey)
+    public func saveBestScoreIfNeeded() {
+        let currentBest = defaults.integer(forKey: Self.bestScoreKey)
         let currentPercentage = Int(scorePercentage)
         if currentPercentage > currentBest {
-            UserDefaults.standard.set(currentPercentage, forKey: Self.bestScoreKey)
+            defaults.set(currentPercentage, forKey: Self.bestScoreKey)
         }
     }
 
-    var bestScore: Int {
-        UserDefaults.standard.integer(forKey: Self.bestScoreKey)
+    public var bestScore: Int {
+        defaults.integer(forKey: Self.bestScoreKey)
     }
 
-    let safetyTips: [SafetyTip] = [
+    public let safetyTips: [SafetyTip] = [
         SafetyTip(
             icon: "bag.fill",
             title: "Emergency Kit",
@@ -307,9 +345,9 @@ class GameState: ObservableObject {
         )
     ]
 
-    @Published var scenarios: [SimulationScenario] = []
+    @Published public var scenarios: [SimulationScenario] = []
 
-    func shuffleQuiz() {
+    public func shuffleQuiz() {
         scenarios = Self.allScenarios.shuffled().map { scenario in
             SimulationScenario(
                 situation: scenario.situation,
@@ -319,11 +357,11 @@ class GameState: ObservableObject {
         }
     }
 
-    func tipsFor(phase: EarthquakePhase) -> [SafetyTip] {
+    public func tipsFor(phase: EarthquakePhase) -> [SafetyTip] {
         safetyTips.filter { $0.phase == phase }
     }
 
-    func answerScenario(_ scenario: SimulationScenario, correct: Bool) {
+    public func answerScenario(_ scenario: SimulationScenario, correct: Bool) {
         answeredScenarios[scenario.id] = correct
         totalQuestions += 1
         if correct {
@@ -334,7 +372,7 @@ class GameState: ObservableObject {
         }
     }
 
-    func resetQuiz() {
+    public func resetQuiz() {
         currentPhase = .splash
         score = 0
         totalQuestions = 0
@@ -343,12 +381,12 @@ class GameState: ObservableObject {
         shuffleQuiz()
     }
 
-    func resetKitBuilder() {
+    public func resetKitBuilder() {
         kitScore = 0
         kitEssentialsFound = 0
     }
 
-    func resetAll() {
+    public func resetAll() {
         currentPhase = .splash
         score = 0
         totalQuestions = 0
@@ -361,66 +399,66 @@ class GameState: ObservableObject {
         seismicZonesVisited = false
         roomScannerUsed = false
         checklistCategories = ChecklistData.allCategories()
-        UserDefaults.standard.removeObject(forKey: Self.checklistKey)
-        UserDefaults.standard.removeObject(forKey: Self.seismicZonesKey)
-        UserDefaults.standard.removeObject(forKey: Self.roomScannerKey)
+        defaults.removeObject(forKey: Self.checklistKey)
+        defaults.removeObject(forKey: Self.seismicZonesKey)
+        defaults.removeObject(forKey: Self.roomScannerKey)
         shuffleQuiz()
     }
 
-    var scorePercentage: Double {
+    public var scorePercentage: Double {
         guard totalQuestions > 0 else { return 0 }
         return Double(score) / Double(totalQuestions) * 100
     }
 
     // MARK: - Checklist
 
-    var totalChecklistItems: Int {
+    public var totalChecklistItems: Int {
         checklistCategories.reduce(0) { $0 + $1.totalCount }
     }
 
-    var completedChecklistItems: Int {
+    public var completedChecklistItems: Int {
         checklistCategories.reduce(0) { $0 + $1.completedCount }
     }
 
-    var checklistProgress: Double {
+    public var checklistProgress: Double {
         guard totalChecklistItems > 0 else { return 0 }
         return Double(completedChecklistItems) / Double(totalChecklistItems)
     }
 
-    var checklistPercentage: Int {
+    public var checklistPercentage: Int {
         Int(checklistProgress * 100)
     }
 
-    var isLearnCompleted: Bool {
+    public var isLearnCompleted: Bool {
         learnPhasesCompleted.count == EarthquakePhase.allCases.count
     }
 
-    var isKitCompleted: Bool {
+    public var isKitCompleted: Bool {
         kitEssentialsFound >= 10
     }
 
-    var isDrillCompleted: Bool {
+    public var isDrillCompleted: Bool {
         drillCompleted
     }
 
-    var isSeismicZonesCompleted: Bool {
+    public var isSeismicZonesCompleted: Bool {
         seismicZonesVisited
     }
 
-    var isRoomScannerCompleted: Bool {
+    public var isRoomScannerCompleted: Bool {
         roomScannerUsed
     }
 
-    var isChecklistCompleted: Bool {
+    public var isChecklistCompleted: Bool {
         checklistPercentage == 100
     }
 
-    var allSectionsCompleted: Bool {
+    public var allSectionsCompleted: Bool {
         isLearnCompleted && isKitCompleted && isDrillCompleted &&
         isSeismicZonesCompleted && isRoomScannerCompleted && isChecklistCompleted
     }
 
-    func toggleChecklistItem(categoryId: UUID, itemId: UUID) {
+    public func toggleChecklistItem(categoryId: UUID, itemId: UUID) {
         guard let catIndex = checklistCategories.firstIndex(where: { $0.id == categoryId }),
               let itemIndex = checklistCategories[catIndex].items.firstIndex(where: { $0.id == itemId }) else {
             return
@@ -429,7 +467,7 @@ class GameState: ObservableObject {
         saveChecklistState()
     }
 
-    func toggleChecklistGroup(categoryId: UUID, priority: ChecklistPriority) {
+    public func toggleChecklistGroup(categoryId: UUID, priority: ChecklistPriority) {
         guard let catIndex = checklistCategories.firstIndex(where: { $0.id == categoryId }) else {
             return
         }
@@ -443,19 +481,19 @@ class GameState: ObservableObject {
         saveChecklistState()
     }
 
-    func markSeismicZonesVisited() {
+    public func markSeismicZonesVisited() {
         guard !seismicZonesVisited else { return }
         seismicZonesVisited = true
         saveCompletionState()
     }
 
-    func markRoomScannerUsed() {
+    public func markRoomScannerUsed() {
         guard !roomScannerUsed else { return }
         roomScannerUsed = true
         saveCompletionState()
     }
 
-    var checklistMotivationalMessage: String {
+    public var checklistMotivationalMessage: String {
         let pct = checklistPercentage
         if pct == 0 {
             return "Every journey starts with a single step. Begin preparing today."
@@ -472,7 +510,7 @@ class GameState: ObservableObject {
         }
     }
 
-    var scoreMessage: String {
+    public var scoreMessage: String {
         let pct = scorePercentage
         if pct == 100 {
             return "Perfect! You're fully prepared."

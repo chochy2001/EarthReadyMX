@@ -1,13 +1,13 @@
 import SwiftUI
 
-enum ChecklistData {
-    static func allCategories() -> [ChecklistCategory] {
+public enum ChecklistData {
+    public static func allCategories() -> [ChecklistCategory] {
         [emergencyKit(), homeSafety(), familyPlan()]
     }
 
     // MARK: - Emergency Kit (FEMA + CENAPRED)
 
-    static func emergencyKit() -> ChecklistCategory {
+    public static func emergencyKit() -> ChecklistCategory {
         ChecklistCategory(
             icon: "bag.fill",
             title: "Emergency Kit",
@@ -63,7 +63,7 @@ enum ChecklistData {
 
     // MARK: - Home Safety (FEMA + CENAPRED)
 
-    static func homeSafety() -> ChecklistCategory {
+    public static func homeSafety() -> ChecklistCategory {
         ChecklistCategory(
             icon: "house.fill",
             title: "Home Safety",
@@ -107,7 +107,7 @@ enum ChecklistData {
 
     // MARK: - Family Plan (CENAPRED + FEMA)
 
-    static func familyPlan() -> ChecklistCategory {
+    public static func familyPlan() -> ChecklistCategory {
         ChecklistCategory(
             icon: "person.3.fill",
             title: "Family Plan",

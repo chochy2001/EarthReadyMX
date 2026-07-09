@@ -1,4 +1,5 @@
 import SwiftUI
+import EarthReadyCore
 
 struct SeismicZoneView: View {
     @EnvironmentObject var gameState: GameState

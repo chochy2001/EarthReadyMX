@@ -1,4 +1,5 @@
 import SwiftUI
+import EarthReadyCore
 
 struct ContentView: View {
     @EnvironmentObject var gameState: GameState

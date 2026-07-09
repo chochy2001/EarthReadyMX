@@ -1,4 +1,5 @@
 import SwiftUI
+import EarthReadyCore
 
 /// Lightweight sheet shown from the splash screen that lets the user pick
 /// between system, light, and dark color schemes.

@@ -2,14 +2,14 @@ import SwiftUI
 
 // MARK: - Seismic Risk Level
 
-enum SeismicRiskLevel: Int, CaseIterable, Sendable {
+public enum SeismicRiskLevel: Int, CaseIterable, Sendable {
     case veryLow = 0
     case low = 1
     case moderate = 2
     case high = 3
     case veryHigh = 4
 
-    var label: String {
+    public var label: String {
         switch self {
         case .veryLow: return "Very Low"
         case .low: return "Low"
@@ -19,7 +19,7 @@ enum SeismicRiskLevel: Int, CaseIterable, Sendable {
         }
     }
 
-    var color: Color {
+    public var color: Color {
         switch self {
         case .veryLow: return .green
         case .low: return .blue
@@ -29,7 +29,7 @@ enum SeismicRiskLevel: Int, CaseIterable, Sendable {
         }
     }
 
-    var icon: String {
+    public var icon: String {
         switch self {
         case .veryLow: return "checkmark.shield.fill"
         case .low: return "shield.fill"
@@ -39,7 +39,7 @@ enum SeismicRiskLevel: Int, CaseIterable, Sendable {
         }
     }
 
-    var description: String {
+    public var description: String {
         switch self {
         case .veryLow:
             return "Earthquakes are rare in this area. Basic awareness is still recommended."
@@ -54,7 +54,7 @@ enum SeismicRiskLevel: Int, CaseIterable, Sendable {
         }
     }
 
-    var safetyTips: [String] {
+    public var safetyTips: [String] {
         switch self {
         case .veryLow:
             return [
@@ -98,45 +98,67 @@ enum SeismicRiskLevel: Int, CaseIterable, Sendable {
 
 // MARK: - Historical Earthquake
 
-struct HistoricalEarthquake: Identifiable, Sendable {
-    let id = UUID()
-    let year: Int
-    let magnitude: Double
-    let location: String
-    let description: String
+public struct HistoricalEarthquake: Identifiable, Sendable {
+    public let id = UUID()
+    public let year: Int
+    public let magnitude: Double
+    public let location: String
+    public let description: String
+
+    public init(year: Int, magnitude: Double, location: String, description: String) {
+        self.year = year
+        self.magnitude = magnitude
+        self.location = location
+        self.description = description
+    }
 }
 
 // MARK: - Seismic State
 
-struct SeismicState: Identifiable, Sendable {
-    let id = UUID()
-    let name: String
-    let zone: String
-    let riskLevel: SeismicRiskLevel
-    let description: String
+public struct SeismicState: Identifiable, Sendable {
+    public let id = UUID()
+    public let name: String
+    public let zone: String
+    public let riskLevel: SeismicRiskLevel
+    public let description: String
+
+    public init(name: String, zone: String, riskLevel: SeismicRiskLevel, description: String) {
+        self.name = name
+        self.zone = zone
+        self.riskLevel = riskLevel
+        self.description = description
+    }
 }
 
 // MARK: - Seismic Country
 
-struct SeismicCountry: Identifiable, Sendable {
-    let id = UUID()
-    let name: String
-    let flag: String
-    let agency: String
-    let states: [SeismicState]
-    let historicalEarthquakes: [HistoricalEarthquake]
+public struct SeismicCountry: Identifiable, Sendable {
+    public let id = UUID()
+    public let name: String
+    public let flag: String
+    public let agency: String
+    public let states: [SeismicState]
+    public let historicalEarthquakes: [HistoricalEarthquake]
+
+    public init(name: String, flag: String, agency: String, states: [SeismicState], historicalEarthquakes: [HistoricalEarthquake]) {
+        self.name = name
+        self.flag = flag
+        self.agency = agency
+        self.states = states
+        self.historicalEarthquakes = historicalEarthquakes
+    }
 }
 
 // MARK: - Seismic Zone Data
 
-enum SeismicZoneData {
-    static func allCountries() -> [SeismicCountry] {
+public enum SeismicZoneData {
+    public static func allCountries() -> [SeismicCountry] {
         [mexico(), usa(), chile(), japan()]
     }
 
     // MARK: - Mexico (CENAPRED)
 
-    static func mexico() -> SeismicCountry {
+    public static func mexico() -> SeismicCountry {
         // Zone A - Very Low
         let zoneAStates: [SeismicState] = [
             SeismicState(name: "Aguascalientes", zone: "A", riskLevel: .veryLow,
@@ -237,7 +259,7 @@ enum SeismicZoneData {
 
     // MARK: - USA (USGS)
 
-    static func usa() -> SeismicCountry {
+    public static func usa() -> SeismicCountry {
         // Very High
         let veryHighStates: [SeismicState] = [
             SeismicState(name: "Alaska", zone: "Very High", riskLevel: .veryHigh,
@@ -379,7 +401,7 @@ enum SeismicZoneData {
 
     // MARK: - Chile (SENAPRED / NCh433)
 
-    static func chile() -> SeismicCountry {
+    public static func chile() -> SeismicCountry {
         // Zone 3 - Very High
         let zone3States: [SeismicState] = [
             SeismicState(name: "Arica y Parinacota", zone: "3", riskLevel: .veryHigh,
@@ -445,7 +467,7 @@ enum SeismicZoneData {
 
     // MARK: - Japan (HERP)
 
-    static func japan() -> SeismicCountry {
+    public static func japan() -> SeismicCountry {
         // Very High
         let veryHighStates: [SeismicState] = [
             SeismicState(name: "Aichi", zone: "Very High", riskLevel: .veryHigh,
