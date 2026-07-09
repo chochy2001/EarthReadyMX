@@ -1,4 +1,5 @@
 import SwiftUI
+import EarthReadyCore
 
 struct StoryView: View {
     @EnvironmentObject var gameState: GameState
@@ -22,6 +23,7 @@ struct StoryView: View {
 
     // MARK: - Slide 3 State
     @State private var typewriterText = ""
+    @State private var typewriterIndex = 0
     @State private var showStrikeSubtitle = false
     @State private var shakeAmount: CGFloat = 0
     @State private var typewriterTimer: Timer?
@@ -406,6 +408,7 @@ struct StoryView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 8.5) {
             advanceToSlide(2)
             typewriterText = fullTypewriterText
+            typewriterIndex = fullTypewriterText.count
             showStrikeSubtitle = true
             AccessibilityAnnouncement.announceScreenChange(
                 "A 7.1 magnitude earthquake struck. The alert arrived too late."
@@ -509,12 +512,12 @@ struct StoryView: View {
         }
 
         // Typewriter effect
-        var charIndex = 0
+        typewriterIndex = 0
         typewriterTimer = Timer.scheduledTimer(withTimeInterval: 0.04, repeats: true) { _ in
             Task { @MainActor [self] in
-                if charIndex < fullTypewriterText.count {
-                    charIndex += 1
-                    typewriterText = String(fullTypewriterText.prefix(charIndex))
+                if typewriterIndex < fullTypewriterText.count {
+                    typewriterIndex += 1
+                    typewriterText = String(fullTypewriterText.prefix(typewriterIndex))
                 } else {
                     self.typewriterTimer?.invalidate()
                     self.typewriterTimer = nil

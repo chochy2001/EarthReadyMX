@@ -142,6 +142,7 @@ final class SoundManager: ObservableObject {
     private var sourceNode: AVAudioSourceNode?
     private var isPlaying = false
     private var modulationTimer: Timer?
+    private var modulationTime: Float = 0
     private var alertGeneration: Int = 0
 
     private let bank = OscillatorBank()
@@ -321,7 +322,7 @@ extension SoundManager {
 
     private func startRumbleModulation() {
         modulationTimer?.invalidate()
-        var modulationTime: Float = 0
+        modulationTime = 0
         modulationTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             Task { @MainActor in
@@ -330,10 +331,10 @@ extension SoundManager {
                     self.modulationTimer = nil
                     return
                 }
-                modulationTime += 0.05
+                self.modulationTime += 0.05
                 // LFO for sub-bass frequency (25-45 Hz)
-                let lfo = sin(modulationTime * 0.3 * 2 * .pi)
-                let intensityLFO = sin(modulationTime * 0.15 * 2 * .pi)
+                let lfo = sin(self.modulationTime * 0.3 * 2 * .pi)
+                let intensityLFO = sin(self.modulationTime * 0.15 * 2 * .pi)
                 self.bank.update(0) { ctrl in
                     ctrl.frequency = 35 + Float(lfo) * 10
                     ctrl.amplitude = 0.15 + Float(intensityLFO) * 0.06
