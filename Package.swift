@@ -52,7 +52,7 @@ let package = Package(
                 .product(name: "EarthReadyCore", package: "EarthReadyCore")
             ],
             path: ".",
-            exclude: ["docs", "README.md", "SupportingInfo.plist", "EarthReadyCore"]
+            exclude: ["docs", "resueltos", "specs", "README.md", "MASTER_SPEC.md", "AGENTS.md", "SupportingInfo.plist", "EarthReadyCore"]
         )
     ],
     swiftLanguageModes: [.v6]
