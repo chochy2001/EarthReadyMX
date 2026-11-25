@@ -370,6 +370,7 @@ struct SimulationView: View {
                     selectedOption = nil
                     showExplanation = false
                     shakeAmount = 0
+                    intensity = 0
                     timedOut = false
                 }
                 startTimer()
