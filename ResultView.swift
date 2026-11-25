@@ -13,6 +13,8 @@ struct ResultView: View {
     @State private var showActions = false
     @State private var animatedScore: Double = 0
     @State private var ringProgress: Double = 0
+    @State private var sequenceToken = UUID()
+    @State private var pendingWorkItems: [DispatchWorkItem] = []
 
     var body: some View {
         ZStack {
@@ -57,6 +59,7 @@ struct ResultView: View {
             }
         }
         .onAppear { startAnimationSequence() }
+        .onDisappear { cancelScheduledWork() }
     }
 
     private var scoreRing: some View {
@@ -261,7 +264,7 @@ struct ResultView: View {
             }
 
             if gameState.allSectionsCompleted {
-                Button(action: {
+                GuardedButton(action: {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                         gameState.currentPhase = .completion
                     }
@@ -287,7 +290,7 @@ struct ResultView: View {
             }
 
             // Start Over
-            Button(action: {
+            GuardedButton(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.resetQuiz()
                     gameState.currentPhase = .splash
@@ -318,7 +321,7 @@ struct ResultView: View {
         hint: String,
         action: @escaping () -> Void
     ) -> some View {
-        Button(action: action) {
+        GuardedButton(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                 Text(title)
@@ -409,6 +412,9 @@ struct ResultView: View {
     }
 
     private func startAnimationSequence() {
+        cancelScheduledWork()
+        let token = sequenceToken
+
         if reduceMotion {
             showScore = true
             showMessage = true
@@ -428,17 +434,17 @@ struct ResultView: View {
             return
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        scheduleAfter(0.3, token: token) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) { showScore = true }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        scheduleAfter(0.6, token: token) {
             withAnimation(.easeOut(duration: 1.2)) {
                 ringProgress = gameState.scorePercentage / 100
             }
             let target = gameState.scorePercentage
             let steps = 30
             for i in 0...steps {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) / Double(steps)) {
+                scheduleAfter(Double(i) / Double(steps), token: token) {
                     animatedScore = target * Double(i) / Double(steps)
                 }
             }
@@ -449,15 +455,32 @@ struct ResultView: View {
             }
             soundManager.playCelebration(scorePercentage: gameState.scorePercentage)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        scheduleAfter(1.5, token: token) {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { showMessage = true }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        scheduleAfter(2.0, token: token) {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { showDetails = true }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+        scheduleAfter(2.5, token: token) {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { showActions = true }
         }
+    }
+
+    private func scheduleAfter(_ delay: TimeInterval, token: UUID, action: @escaping @MainActor () -> Void) {
+        let item = DispatchWorkItem {
+            Task { @MainActor in
+                guard sequenceToken == token else { return }
+                action()
+            }
+        }
+        pendingWorkItems.append(item)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    }
+
+    private func cancelScheduledWork() {
+        sequenceToken = UUID()
+        pendingWorkItems.forEach { $0.cancel() }
+        pendingWorkItems.removeAll()
     }
 }
 

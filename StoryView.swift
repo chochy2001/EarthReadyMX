@@ -42,6 +42,10 @@ struct StoryView: View {
     @State private var showActionButton = false
     @State private var hopefulGradient = false
 
+    // MARK: - Sequence Cancellation
+    @State private var sequenceToken = UUID()
+    @State private var pendingWorkItems: [DispatchWorkItem] = []
+
     private let fullTypewriterText = "A 7.1 magnitude earthquake struck."
 
     var body: some View {
@@ -53,7 +57,7 @@ struct StoryView: View {
             VStack {
                 HStack {
                     Spacer()
-                    Button(action: skipToSimulation) {
+                    GuardedButton(action: skipToSimulation) {
                         Text("Skip")
                             .font(.system(.subheadline, design: .rounded, weight: .medium))
                             .foregroundColor(.gray)
@@ -323,7 +327,8 @@ struct StoryView: View {
             }
 
             if showActionButton {
-                Button(action: {
+                GuardedButton(action: {
+                    cleanupTimers()
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                         gameState.currentPhase = .simulation
                     }
@@ -361,6 +366,7 @@ struct StoryView: View {
     // MARK: - Skip
 
     private func skipToSimulation() {
+        guard gameState.currentPhase == .story else { return }
         cleanupTimers()
         withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
             gameState.currentPhase = .simulation
@@ -370,6 +376,9 @@ struct StoryView: View {
     // MARK: - Cleanup
 
     private func cleanupTimers() {
+        sequenceToken = UUID()
+        pendingWorkItems.forEach { $0.cancel() }
+        pendingWorkItems.removeAll()
         seismographTimer?.invalidate()
         seismographTimer = nil
         typewriterTimer?.invalidate()
@@ -377,17 +386,30 @@ struct StoryView: View {
         soundManager.stop()
     }
 
+    private func scheduleAfter(_ delay: TimeInterval, token: UUID, action: @escaping @MainActor () -> Void) {
+        let item = DispatchWorkItem {
+            Task { @MainActor in
+                guard sequenceToken == token else { return }
+                action()
+            }
+        }
+        pendingWorkItems.append(item)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    }
+
     // MARK: - Animation Sequence
 
     private func startStorySequence() {
+        cleanupTimers()
+        let token = sequenceToken
         if reduceMotion {
-            startReducedMotionSequence()
+            startReducedMotionSequence(token: token)
             return
         }
-        startSlideOne()
+        startSlideOne(token: token)
     }
 
-    private func startReducedMotionSequence() {
+    private func startReducedMotionSequence(token: UUID) {
         currentSlide = 0
         showDate = true
         showCity = true
@@ -395,7 +417,7 @@ struct StoryView: View {
             "September 19, 2017. Mexico City. Story about the earthquake."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+        scheduleAfter(3.5, token: token) {
             advanceToSlide(1)
             showDrillText = true
             showDrillSubtitle = true
@@ -405,7 +427,7 @@ struct StoryView: View {
             )
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 8.5) {
+        scheduleAfter(8.5, token: token) {
             advanceToSlide(2)
             typewriterText = fullTypewriterText
             typewriterIndex = fullTypewriterText.count
@@ -415,7 +437,7 @@ struct StoryView: View {
             )
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 14.5) {
+        scheduleAfter(14.5, token: token) {
             advanceToSlide(3)
             deathCount = 370
             showBuildings = true
@@ -425,7 +447,7 @@ struct StoryView: View {
             )
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 21.5) {
+        scheduleAfter(21.5, token: token) {
             advanceToSlide(4)
             showSecondsText = true
             showSecondsSubtitle = true
@@ -434,7 +456,7 @@ struct StoryView: View {
             )
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 26.5) {
+        scheduleAfter(26.5, token: token) {
             advanceToSlide(5)
             hopefulGradient = true
             showCallToAction = true
@@ -447,16 +469,16 @@ struct StoryView: View {
 
     // MARK: - Slide One
 
-    private func startSlideOne() {
+    private func startSlideOne(token: UUID) {
         currentSlide = 0
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        scheduleAfter(0.3, token: token) {
             withAnimation(.easeIn(duration: 0.8)) {
                 showDate = true
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+        scheduleAfter(1.2, token: token) {
             withAnimation(.easeIn(duration: 0.6)) {
                 showCity = true
             }
@@ -466,27 +488,27 @@ struct StoryView: View {
             "September 19, 2017. Mexico City."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
-            startSlideTwo()
+        scheduleAfter(3.5, token: token) {
+            startSlideTwo(token: token)
         }
     }
 
     // MARK: - Slide Two
 
-    private func startSlideTwo() {
+    private func startSlideTwo(token: UUID) {
         withAnimation(.easeInOut(duration: 0.4)) {
             advanceToSlide(1)
         }
 
         startCalmSeismograph()
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        scheduleAfter(0.3, token: token) {
             withAnimation(.easeIn(duration: 0.6)) {
                 showDrillText = true
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        scheduleAfter(1.0, token: token) {
             withAnimation(.easeIn(duration: 0.6)) {
                 showDrillSubtitle = true
             }
@@ -496,14 +518,14 @@ struct StoryView: View {
             "That morning, millions practiced an earthquake drill."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            startSlideThree()
+        scheduleAfter(5.0, token: token) {
+            startSlideThree(token: token)
         }
     }
 
     // MARK: - Slide Three
 
-    private func startSlideThree() {
+    private func startSlideThree(token: UUID) {
         seismographTimer?.invalidate()
         seismographTimer = nil
 
@@ -515,6 +537,11 @@ struct StoryView: View {
         typewriterIndex = 0
         typewriterTimer = Timer.scheduledTimer(withTimeInterval: 0.04, repeats: true) { _ in
             Task { @MainActor [self] in
+                guard sequenceToken == token else {
+                    self.typewriterTimer?.invalidate()
+                    self.typewriterTimer = nil
+                    return
+                }
                 if typewriterIndex < fullTypewriterText.count {
                     typewriterIndex += 1
                     typewriterText = String(fullTypewriterText.prefix(typewriterIndex))
@@ -526,7 +553,7 @@ struct StoryView: View {
         }
 
         // Shake + haptic + sound at 0.5s
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        scheduleAfter(0.5, token: token) {
             hapticManager.playEarthquakeSplash()
             soundManager.playSeismicAlert(duration: 2.0)
             withAnimation(.easeInOut(duration: 0.8)) {
@@ -534,7 +561,7 @@ struct StoryView: View {
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+        scheduleAfter(1.8, token: token) {
             withAnimation(.easeIn(duration: 0.5)) {
                 showStrikeSubtitle = true
             }
@@ -544,20 +571,20 @@ struct StoryView: View {
             "1:14 PM. Without warning. A 7.1 magnitude earthquake struck."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
-            startSlideFour()
+        scheduleAfter(6.0, token: token) {
+            startSlideFour(token: token)
         }
     }
 
     // MARK: - Slide Four
 
-    private func startSlideFour() {
+    private func startSlideFour(token: UUID) {
         withAnimation(.easeInOut(duration: 0.4)) {
             advanceToSlide(3)
         }
 
         // Animate death count from 0 to 370
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        scheduleAfter(0.3, token: token) {
             withAnimation(.easeInOut(duration: 2.0)) {
                 deathCount = 370
             }
@@ -565,7 +592,7 @@ struct StoryView: View {
         }
 
         // Show buildings after 1s
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+        scheduleAfter(1.3, token: token) {
             withAnimation(.easeIn(duration: 0.5)) {
                 showBuildings = true
             }
@@ -573,7 +600,7 @@ struct StoryView: View {
         }
 
         // Show injured after 2s
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.3) {
+        scheduleAfter(2.3, token: token) {
             withAnimation(.easeIn(duration: 0.5)) {
                 showInjured = true
             }
@@ -584,25 +611,25 @@ struct StoryView: View {
             "The impact. 370 lives lost. 44 buildings collapsed. Over 6000 people injured."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) {
-            startSlideFive()
+        scheduleAfter(7.0, token: token) {
+            startSlideFive(token: token)
         }
     }
 
     // MARK: - Slide Five
 
-    private func startSlideFive() {
+    private func startSlideFive(token: UUID) {
         withAnimation(.easeInOut(duration: 0.4)) {
             advanceToSlide(4)
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        scheduleAfter(0.3, token: token) {
             withAnimation(.easeIn(duration: 0.6)) {
                 showSecondsText = true
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+        scheduleAfter(1.2, token: token) {
             withAnimation(.easeIn(duration: 0.6)) {
                 showSecondsSubtitle = true
             }
@@ -612,14 +639,14 @@ struct StoryView: View {
             "The strong shaking lasted just 20 seconds. But those 20 seconds changed everything."
         )
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            startSlideSix()
+        scheduleAfter(5.0, token: token) {
+            startSlideSix(token: token)
         }
     }
 
     // MARK: - Slide Six
 
-    private func startSlideSix() {
+    private func startSlideSix(token: UUID) {
         withAnimation(.easeInOut(duration: 0.4)) {
             advanceToSlide(5)
         }
@@ -628,13 +655,13 @@ struct StoryView: View {
             hopefulGradient = true
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        scheduleAfter(0.5, token: token) {
             withAnimation(.easeIn(duration: 0.8)) {
                 showCallToAction = true
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        scheduleAfter(1.5, token: token) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 showActionButton = true
             }

@@ -164,6 +164,9 @@ struct CompletionView: View {
     @State private var showStats = false
     @State private var showActions = false
     @State private var checkmarkScale: CGFloat = 0.3
+    @State private var isSharing = false
+    @State private var sequenceToken = UUID()
+    @State private var pendingWorkItems: [DispatchWorkItem] = []
 
     var body: some View {
         ZStack {
@@ -189,7 +192,7 @@ struct CompletionView: View {
                     Spacer().frame(height: 30)
 
                     HStack {
-                        Button(action: {
+                        GuardedButton(action: {
                             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                                 gameState.currentPhase = .result
                             }
@@ -233,6 +236,7 @@ struct CompletionView: View {
             }
         }
         .onAppear { startAnimationSequence() }
+        .onDisappear { cancelScheduledWork() }
     }
 
     // MARK: - Shield Icon
@@ -387,7 +391,7 @@ struct CompletionView: View {
 
     private var actionsSection: some View {
         VStack(spacing: 12) {
-            Button(action: shareAchievement) {
+            GuardedButton(action: shareAchievement) {
                 HStack(spacing: 8) {
                     Image(systemName: "square.and.arrow.up")
                     Text("Share Your Achievement")
@@ -405,9 +409,10 @@ struct CompletionView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
+            .disabled(isSharing)
             .accessibilityHint("Double tap to share your EarthReady achievement as an image")
 
-            Button(action: {
+            GuardedButton(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.resetQuiz()
                     gameState.currentPhase = .simulation
@@ -432,7 +437,7 @@ struct CompletionView: View {
             }
             .accessibilityHint("Double tap to retake the earthquake quiz")
 
-            Button(action: {
+            GuardedButton(action: {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.resetAll()
                     gameState.currentPhase = .splash
@@ -457,6 +462,19 @@ struct CompletionView: View {
     // MARK: - Share Achievement
 
     private func shareAchievement() {
+        guard !isSharing else { return }
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootVC = windowScene.windows.first(where: \.isKeyWindow)?.rootViewController
+                  ?? windowScene.windows.first?.rootViewController else { return }
+        var topVC = rootVC
+        while let presented = topVC.presentedViewController {
+            if presented is UIActivityViewController { return }
+            topVC = presented
+        }
+        guard topVC.presentedViewController == nil, !topVC.isBeingDismissed else { return }
+
+        isSharing = true
+
         let card = ShareableAchievementCard(
             learnCompleted: gameState.isLearnCompleted,
             kitCompleted: gameState.isKitCompleted,
@@ -467,18 +485,21 @@ struct CompletionView: View {
         )
         let renderer = ImageRenderer(content: card)
         renderer.scale = 3
-        guard let image = renderer.uiImage else { return }
+        guard let image = renderer.uiImage else {
+            isSharing = false
+            return
+        }
 
         let text = "I scored \(Int(gameState.scorePercentage))% on EarthReady!"
         let activityVC = UIActivityViewController(
             activityItems: [image, text],
             applicationActivities: nil
         )
-
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let rootVC = windowScene.windows.first?.rootViewController else { return }
-        var topVC = rootVC
-        while let presented = topVC.presentedViewController { topVC = presented }
+        activityVC.completionWithItemsHandler = { _, _, _, _ in
+            Task { @MainActor in
+                isSharing = false
+            }
+        }
         activityVC.popoverPresentationController?.sourceView = topVC.view
         topVC.present(activityVC, animated: true)
     }
@@ -486,6 +507,9 @@ struct CompletionView: View {
     // MARK: - Animation Sequence
 
     private func startAnimationSequence() {
+        cancelScheduledWork()
+        let token = sequenceToken
+
         if reduceMotion {
             showIcon = true
             showTitle = true
@@ -503,26 +527,26 @@ struct CompletionView: View {
         hapticManager.playPerfectScore()
         soundManager.playCelebration(scorePercentage: 100)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        scheduleAfter(0.3, token: token) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
                 showIcon = true
                 checkmarkScale = 1.0
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        scheduleAfter(0.8, token: token) {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                 showTitle = true
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+        scheduleAfter(1.3, token: token) {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                 showStats = true
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+        scheduleAfter(1.8, token: token) {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                 showActions = true
             }
@@ -530,5 +554,22 @@ struct CompletionView: View {
                 "Congratulations! You've completed EarthReady and learned earthquake safety protocols."
             )
         }
+    }
+
+    private func scheduleAfter(_ delay: TimeInterval, token: UUID, action: @escaping @MainActor () -> Void) {
+        let item = DispatchWorkItem {
+            Task { @MainActor in
+                guard sequenceToken == token else { return }
+                action()
+            }
+        }
+        pendingWorkItems.append(item)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    }
+
+    private func cancelScheduledWork() {
+        sequenceToken = UUID()
+        pendingWorkItems.forEach { $0.cancel() }
+        pendingWorkItems.removeAll()
     }
 }

@@ -131,6 +131,8 @@ struct DrillView: View {
     @State private var shakeAmount: CGFloat = 0
     @State private var currentInstructionText: String = ""
     @State private var hasAppeared = false
+    @State private var runToken = UUID()
+    @State private var pendingWorkItems: [DispatchWorkItem] = []
 
     private var totalDrillDuration: TimeInterval {
         DrillPhase.allCases.reduce(0) { $0 + $1.duration }
@@ -212,7 +214,7 @@ struct DrillView: View {
     private var countdownView: some View {
         VStack(spacing: 24) {
             HStack {
-                Button(action: {
+                GuardedButton(action: {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                         cleanupDrill()
                         gameState.currentPhase = .result
@@ -281,7 +283,7 @@ struct DrillView: View {
                 .font(.system(.body, design: .rounded, weight: .medium))
                 .foregroundColor(.gray)
 
-            Button(action: {
+            GuardedButton(action: {
                 resumeDrill()
             }) {
                 HStack(spacing: 8) {
@@ -496,7 +498,7 @@ struct DrillView: View {
     // MARK: - Stop Button
 
     private var stopButton: some View {
-        Button(action: {
+        GuardedButton(action: {
             stopDrill()
         }) {
             HStack(spacing: 8) {
@@ -544,7 +546,7 @@ struct DrillView: View {
             }
 
             VStack(spacing: 12) {
-                Button(action: {
+                GuardedButton(action: {
                     restartDrill()
                 }) {
                     HStack(spacing: 8) {
@@ -566,7 +568,7 @@ struct DrillView: View {
                 }
                 .accessibilityHint("Double tap to restart the drill")
 
-                Button(action: {
+                GuardedButton(action: {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                         gameState.currentPhase = .result
                     }
@@ -628,7 +630,7 @@ struct DrillView: View {
                 .padding(.horizontal, 20)
 
             VStack(spacing: 12) {
-                Button(action: {
+                GuardedButton(action: {
                     restartDrill()
                 }) {
                     HStack(spacing: 8) {
@@ -650,7 +652,7 @@ struct DrillView: View {
                 }
                 .accessibilityHint("Double tap to practice the drill again")
 
-                Button(action: {
+                GuardedButton(action: {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                         gameState.currentPhase = .result
                     }
@@ -710,28 +712,31 @@ struct DrillView: View {
     // MARK: - Drill Control Logic
 
     private func startCountdown() {
+        cancelScheduledWork()
+        let token = runToken
         showCountdown = true
         countdownValue = 3
 
         func tick() {
             if countdownValue > 1 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    guard showCountdown else { return }
+                scheduleAfter(1.0, token: token) {
+                    guard showCountdown, !drillStopped else { return }
                     countdownValue -= 1
                     tick()
                 }
             } else {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    guard showCountdown else { return }
+                scheduleAfter(1.0, token: token) {
+                    guard showCountdown, !drillStopped else { return }
                     showCountdown = false
-                    beginDrill()
+                    beginDrill(token: token)
                 }
             }
         }
         tick()
     }
 
-    private func beginDrill() {
+    private func beginDrill(token: UUID) {
+        guard runToken == token else { return }
         isActive = true
         isPaused = false
         totalElapsed = 0
@@ -740,7 +745,7 @@ struct DrillView: View {
         drillStopped = false
 
         startDrillTimer()
-        advanceToPhase(.briefing)
+        advanceToPhase(.briefing, token: token)
     }
 
     private func startDrillTimer() {
@@ -758,7 +763,8 @@ struct DrillView: View {
         }
     }
 
-    private func advanceToPhase(_ phase: DrillPhase) {
+    private func advanceToPhase(_ phase: DrillPhase, token: UUID) {
+        guard runToken == token, isActive, !isPaused, !drillStopped else { return }
         withAnimation(.easeInOut(duration: 0.3)) {
             currentPhase = phase
         }
@@ -769,36 +775,36 @@ struct DrillView: View {
         triggerSoundForPhase(phase)
 
         if phase == .holdOn {
-            startHoldOnSequence()
+            startHoldOnSequence(token: token)
         } else {
             speechManager.speak(text: phase.instruction) { [self] in
-                guard isActive, !isPaused, !drillStopped else { return }
-                scheduleNextPhase(after: phase)
+                guard runToken == token, isActive, !isPaused, !drillStopped else { return }
+                scheduleNextPhase(after: phase, token: token)
             }
         }
     }
 
-    private func startHoldOnSequence() {
+    private func startHoldOnSequence(token: UUID) {
         // First instruction
         speechManager.speak(text: currentPhase.instruction) {
-            guard self.isActive, !self.isPaused, !self.drillStopped else { return }
+            guard self.runToken == token, self.isActive, !self.isPaused, !self.drillStopped else { return }
 
             // Wait 5 seconds then speak second instruction
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+            self.scheduleAfter(5.0, token: token) {
                 guard self.isActive, !self.isPaused, !self.drillStopped else { return }
                 self.currentInstructionText = self.currentPhase.holdOnSecondInstruction
 
                 self.speechManager.speak(text: self.currentPhase.holdOnSecondInstruction) {
-                    guard self.isActive, !self.isPaused, !self.drillStopped else { return }
+                    guard self.runToken == token, self.isActive, !self.isPaused, !self.drillStopped else { return }
 
                     // Wait 5 more seconds then speak third instruction
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                    self.scheduleAfter(5.0, token: token) {
                         guard self.isActive, !self.isPaused, !self.drillStopped else { return }
                         self.currentInstructionText = self.currentPhase.holdOnThirdInstruction
 
                         self.speechManager.speak(text: self.currentPhase.holdOnThirdInstruction) {
-                            guard self.isActive, !self.isPaused, !self.drillStopped else { return }
-                            self.scheduleNextPhase(after: .holdOn)
+                            guard self.runToken == token, self.isActive, !self.isPaused, !self.drillStopped else { return }
+                            self.scheduleNextPhase(after: .holdOn, token: token)
                         }
                     }
                 }
@@ -806,7 +812,7 @@ struct DrillView: View {
         }
     }
 
-    private func scheduleNextPhase(after phase: DrillPhase) {
+    private func scheduleNextPhase(after phase: DrillPhase, token: UUID) {
         let allPhases = DrillPhase.allCases
         guard let currentIndex = allPhases.firstIndex(of: phase),
               currentIndex + 1 < allPhases.count else {
@@ -817,13 +823,13 @@ struct DrillView: View {
         // Short pause between phases to let TTS finish and effects settle
         let delay: TimeInterval = (phase == .shakingStops) ? 1.5 : 0.5
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+        scheduleAfter(delay, token: token) {
             guard self.isActive, !self.isPaused, !self.drillStopped else { return }
 
             if next == .complete {
                 self.handleDrillComplete()
             } else {
-                self.advanceToPhase(next)
+                self.advanceToPhase(next, token: token)
             }
         }
     }
@@ -879,23 +885,28 @@ struct DrillView: View {
     // MARK: - Pause / Resume / Stop
 
     private func pauseDrill() {
+        cancelScheduledWork()
         isPaused = true
         speechManager.stop()
         soundManager.stop()
     }
 
     private func resumeDrill() {
+        cancelScheduledWork()
+        let token = runToken
         isPaused = false
         // Re-speak current phase instruction
         currentInstructionText = currentPhase.instruction
         speechManager.speak(text: currentPhase.instruction) {
-            guard self.isActive, !self.isPaused, !self.drillStopped else { return }
-            self.scheduleNextPhase(after: self.currentPhase)
+            guard self.runToken == token, self.isActive, !self.isPaused, !self.drillStopped else { return }
+            self.scheduleNextPhase(after: self.currentPhase, token: token)
         }
         triggerSoundForPhase(currentPhase)
     }
 
     private func stopDrill() {
+        guard !drillStopped else { return }
+        cancelScheduledWork()
         isActive = false
         isPaused = false
         drillStopped = true
@@ -907,6 +918,7 @@ struct DrillView: View {
     }
 
     private func restartDrill() {
+        cancelScheduledWork()
         drillStopped = false
         showCountdown = true
         currentPhase = .briefing
@@ -918,10 +930,28 @@ struct DrillView: View {
     }
 
     private func cleanupDrill() {
+        cancelScheduledWork()
         isActive = false
         speechManager.stop()
         soundManager.stop()
         drillTimer?.invalidate()
         drillTimer = nil
+    }
+
+    private func scheduleAfter(_ delay: TimeInterval, token: UUID, action: @escaping @MainActor () -> Void) {
+        let item = DispatchWorkItem {
+            Task { @MainActor in
+                guard runToken == token else { return }
+                action()
+            }
+        }
+        pendingWorkItems.append(item)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    }
+
+    private func cancelScheduledWork() {
+        runToken = UUID()
+        pendingWorkItems.forEach { $0.cancel() }
+        pendingWorkItems.removeAll()
     }
 }
