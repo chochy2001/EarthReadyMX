@@ -20,6 +20,9 @@ struct KitBuilderView: View {
     @State private var showIntro: Bool = true
     @State private var wrongItemShake: UUID?
     @State private var isDropTargeted: Bool = false
+    @State private var hasFinished: Bool = false
+    @State private var runToken = UUID()
+    @State private var pendingWorkItems: [DispatchWorkItem] = []
 
     private let totalEssentials = 10
 
@@ -45,7 +48,7 @@ struct KitBuilderView: View {
                 } else {
                     VStack(spacing: 0) {
                         HStack {
-                            Button(action: {
+                            GuardedButton(action: {
                                 withAnimation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.7)) {
                                     gameState.currentPhase = .result
                                 }
@@ -165,6 +168,9 @@ struct KitBuilderView: View {
                 "Emergency Kit Builder. Tap items or drag them into your backpack. \(items.count) items to choose from."
             )
         }
+        .onDisappear {
+            cancelScheduledWork()
+        }
     }
 
     // MARK: - Intro Overlay
@@ -198,7 +204,7 @@ struct KitBuilderView: View {
 
             Spacer()
 
-            Button(action: {
+            GuardedButton(action: {
                 withAnimation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.8)) {
                     showIntro = false
                 }
@@ -246,7 +252,7 @@ struct KitBuilderView: View {
     // MARK: - Complete Button
 
     private var completeButton: some View {
-        Button(action: {
+        GuardedButton(action: {
             finishGame()
         }) {
             HStack(spacing: 8) {
@@ -266,6 +272,7 @@ struct KitBuilderView: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 14))
         }
+        .disabled(hasFinished)
         .modifier(PulseEffect())
         .accessibilityHint("Double tap to finish building your kit and see your results")
     }
@@ -273,7 +280,7 @@ struct KitBuilderView: View {
     // MARK: - Drop Handling
 
     private func handleDrop(item: KitItem) {
-        guard !bagContents.contains(item.id) else { return }
+        guard !hasFinished, !bagContents.contains(item.id) else { return }
 
         bagContents.insert(item.id)
         score += item.points
@@ -281,6 +288,7 @@ struct KitBuilderView: View {
         let isCorrect = item.category == .essential
         feedbackIsCorrect = isCorrect
         feedbackItem = item
+        let token = runToken
 
         if isCorrect {
             essentialsFound += 1
@@ -290,14 +298,14 @@ struct KitBuilderView: View {
             hapticManager.playWrongAnswer()
             soundManager.playIncorrectSound()
             wrongItemShake = item.id
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            scheduleAfter(0.5, token: token) {
                 wrongItemShake = nil
             }
         }
 
         // Dismiss feedback toast after 2.5 seconds
         let capturedItem = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+        scheduleAfter(2.5, token: token) {
             if feedbackItem?.id == capturedItem.id {
                 withAnimation(reduceMotion ? .none : .easeOut(duration: 0.3)) {
                     feedbackItem = nil
@@ -309,6 +317,9 @@ struct KitBuilderView: View {
     // MARK: - Finish Game
 
     private func finishGame() {
+        guard !hasFinished, !showResults else { return }
+        hasFinished = true
+
         // Bonus for finding all essentials
         if essentialsFound == totalEssentials {
             score += 20
@@ -384,7 +395,7 @@ struct KitBuilderView: View {
 
                 // Actions
                 VStack(spacing: 12) {
-                    Button(action: {
+                    GuardedButton(action: {
                         withAnimation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.7)) {
                             gameState.currentPhase = .result
                         }
@@ -408,7 +419,7 @@ struct KitBuilderView: View {
                     }
                     .accessibilityHint("Double tap to return to your progress")
 
-                    Button(action: {
+                    GuardedButton(action: {
                         resetAndReplay()
                     }) {
                         HStack(spacing: 8) {
@@ -521,13 +532,33 @@ struct KitBuilderView: View {
     }
 
     private func resetAndReplay() {
+        cancelScheduledWork()
         gameState.resetKitBuilder()
         bagContents = []
         score = 0
         essentialsFound = 0
         feedbackItem = nil
+        wrongItemShake = nil
+        hasFinished = false
         showResults = false
         items = KitBuilderData.itemsForSession()
+    }
+
+    private func scheduleAfter(_ delay: TimeInterval, token: UUID, action: @escaping @MainActor () -> Void) {
+        let item = DispatchWorkItem {
+            Task { @MainActor in
+                guard runToken == token else { return }
+                action()
+            }
+        }
+        pendingWorkItems.append(item)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    }
+
+    private func cancelScheduledWork() {
+        runToken = UUID()
+        pendingWorkItems.forEach { $0.cancel() }
+        pendingWorkItems.removeAll()
     }
 }
 

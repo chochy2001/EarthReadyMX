@@ -18,6 +18,8 @@ struct SimulationView: View {
     @State private var sceneShaking = true
     @State private var timedOut = false
     @State private var hasAppeared = false
+    @State private var scenarioToken = UUID()
+    @State private var pendingWorkItems: [DispatchWorkItem] = []
 
     private var currentScenario: SimulationScenario? {
         guard currentIndex < gameState.scenarios.count else { return nil }
@@ -101,6 +103,7 @@ struct SimulationView: View {
         .onDisappear {
             soundManager.stopEarthquakeRumble()
             stopTimer()
+            cancelScheduledWork()
         }
     }
 
@@ -204,14 +207,15 @@ struct SimulationView: View {
 
     private func optionButton(_ option: SimulationOption, scenario: SimulationScenario) -> some View {
         Button(action: {
-            guard selectedOption == nil else { return }
+            guard !answerGiven else { return }
             stopTimer()
+            let token = scenarioToken
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 selectedOption = option
                 showExplanation = true
                 gameState.answerScenario(scenario, correct: option.isCorrect)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            scheduleAfter(0.5, token: token) {
                 let result = option.isCorrect ? "Correct" : "Incorrect"
                 AccessibilityAnnouncement.announceScreenChange("\(result). \(scenario.explanation)")
             }
@@ -225,7 +229,7 @@ struct SimulationView: View {
                     shakeAmount = 3
                     intensity = 0.5
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                scheduleAfter(0.5, token: token) {
                     withAnimation { intensity = 0 }
                 }
             }
@@ -356,22 +360,27 @@ struct SimulationView: View {
     }
 
     private var continueButton: some View {
-        Button(action: {
+        GuardedButton(action: {
+            guard showExplanation else { return }
+            cancelScheduledWork()
             if currentIndex + 1 < gameState.scenarios.count {
+                let token = scenarioToken
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                     currentIndex += 1
                     selectedOption = nil
                     showExplanation = false
                     shakeAmount = 0
+                    intensity = 0
                     timedOut = false
                 }
                 startTimer()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                scheduleAfter(0.5, token: token) {
                     if let scenario = currentScenario {
                         AccessibilityAnnouncement.announceScreenChange("Scenario \(currentIndex + 1) of \(gameState.scenarios.count). \(scenario.situation)")
                     }
                 }
             } else {
+                guard gameState.currentPhase == .simulation else { return }
                 stopTimer()
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.currentPhase = .result
@@ -424,8 +433,9 @@ struct SimulationView: View {
     }
 
     private func handleTimeout() {
-        guard selectedOption == nil, let scenario = currentScenario else { return }
+        guard !answerGiven, let scenario = currentScenario else { return }
         stopTimer()
+        let token = scenarioToken
         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
             timedOut = true
             showExplanation = true
@@ -437,10 +447,27 @@ struct SimulationView: View {
             shakeAmount = 3
             intensity = 0.5
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        scheduleAfter(0.5, token: token) {
             withAnimation { intensity = 0 }
         }
         AccessibilityAnnouncement.announceScreenChange("Time's up. The correct answer is highlighted.")
+    }
+
+    private func scheduleAfter(_ delay: TimeInterval, token: UUID, action: @escaping @MainActor () -> Void) {
+        let item = DispatchWorkItem {
+            Task { @MainActor in
+                guard scenarioToken == token else { return }
+                action()
+            }
+        }
+        pendingWorkItems.append(item)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    }
+
+    private func cancelScheduledWork() {
+        scenarioToken = UUID()
+        pendingWorkItems.forEach { $0.cancel() }
+        pendingWorkItems.removeAll()
     }
 
     // MARK: - Color Helpers

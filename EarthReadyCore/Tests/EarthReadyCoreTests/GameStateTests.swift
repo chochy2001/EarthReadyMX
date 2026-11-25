@@ -125,6 +125,33 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(state.answeredScenarios[scenario.id], true)
     }
 
+    func testAnswerScenarioDeduplicatesRepeatedAnswersForSameScenario() {
+        let defaults = makeIsolatedDefaults()
+        let state = GameState(userDefaults: defaults)
+        let scenario = state.scenarios[0]
+
+        state.answerScenario(scenario, correct: true)
+        state.answerScenario(scenario, correct: true)
+        state.answerScenario(scenario, correct: false)
+
+        XCTAssertEqual(state.score, 1)
+        XCTAssertEqual(state.totalQuestions, 1)
+        XCTAssertEqual(state.answeredScenarios[scenario.id], true)
+    }
+
+    func testAnswerScenarioIgnoresDuplicateTimeoutAfterIncorrectAnswer() {
+        let defaults = makeIsolatedDefaults()
+        let state = GameState(userDefaults: defaults)
+        let scenario = state.scenarios[0]
+
+        state.answerScenario(scenario, correct: false)
+        state.answerScenario(scenario, correct: true)
+
+        XCTAssertEqual(state.score, 0)
+        XCTAssertEqual(state.totalQuestions, 1)
+        XCTAssertEqual(state.answeredScenarios[scenario.id], false)
+    }
+
     func testAnswerScenarioSavesBestScoreOnlyWhenAllScenariosAnswered() {
         let defaults = makeIsolatedDefaults()
         let state = GameState(userDefaults: defaults)

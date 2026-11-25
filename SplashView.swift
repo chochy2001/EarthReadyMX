@@ -18,6 +18,8 @@ struct SplashView: View {
     @State private var seismographTimer: Timer?
     @State private var viewSize: CGSize = .zero
     @State private var showAppearanceSheet = false
+    @State private var sequenceToken = UUID()
+    @State private var pendingWorkItems: [DispatchWorkItem] = []
 
     var body: some View {
         GeometryReader { geometry in
@@ -125,7 +127,8 @@ struct SplashView: View {
                 Spacer()
 
                 if showButton {
-                    Button(action: {
+                    GuardedButton(action: {
+                        cancelScheduledWork()
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                             gameState.currentPhase = .story
                         }
@@ -164,7 +167,7 @@ struct SplashView: View {
             VStack {
                 HStack {
                     Spacer()
-                    Button {
+                    GuardedButton {
                         showAppearanceSheet = true
                     } label: {
                         Image(systemName: "paintpalette")
@@ -193,6 +196,7 @@ struct SplashView: View {
             startAnimationSequence()
         }
         .onDisappear {
+            cancelScheduledWork()
             seismographTimer?.invalidate()
             seismographTimer = nil
             motionManager.stopUpdates()
@@ -202,6 +206,9 @@ struct SplashView: View {
     }
 
     private func startAnimationSequence() {
+        cancelScheduledWork()
+        let token = sequenceToken
+
         if reduceMotion {
             showTitle = true
             showStats = true
@@ -225,25 +232,42 @@ struct SplashView: View {
             isShaking = true
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { generateCracks() }
+        scheduleAfter(0.3, token: token) { generateCracks() }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        scheduleAfter(0.8, token: token) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) { showTitle = true }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+        scheduleAfter(1.3, token: token) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) { showStats = true }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+        scheduleAfter(1.8, token: token) {
             withAnimation(.easeIn(duration: 0.6)) { showSubtitle = true }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+        scheduleAfter(2.2, token: token) {
             isShaking = false
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) { showButton = true }
             AccessibilityAnnouncement.announceScreenChange("EarthReady. Earthquake preparedness. Tap Begin to start.")
         }
+    }
+
+    private func scheduleAfter(_ delay: TimeInterval, token: UUID, action: @escaping @MainActor () -> Void) {
+        let item = DispatchWorkItem {
+            Task { @MainActor in
+                guard sequenceToken == token else { return }
+                action()
+            }
+        }
+        pendingWorkItems.append(item)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    }
+
+    private func cancelScheduledWork() {
+        sequenceToken = UUID()
+        pendingWorkItems.forEach { $0.cancel() }
+        pendingWorkItems.removeAll()
     }
 
     private func startSeismograph() {

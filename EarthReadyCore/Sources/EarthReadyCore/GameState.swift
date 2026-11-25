@@ -362,6 +362,7 @@ public class GameState: ObservableObject {
     }
 
     public func answerScenario(_ scenario: SimulationScenario, correct: Bool) {
+        guard answeredScenarios[scenario.id] == nil else { return }
         answeredScenarios[scenario.id] = correct
         totalQuestions += 1
         if correct {

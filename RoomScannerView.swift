@@ -427,6 +427,9 @@ struct RoomScannerView: View {
     @State private var ringProgress: Double = 0
     @State private var animatedScore: Double = 0
     @State private var showResults = false
+    @State private var isLoadingPhoto = false
+    @State private var animationToken = UUID()
+    @State private var pendingWorkItems: [DispatchWorkItem] = []
 
     private var isCameraAvailable: Bool {
         UIImagePickerController.isSourceTypeAvailable(.camera)
@@ -453,7 +456,7 @@ struct RoomScannerView: View {
             CameraPickerView(image: $selectedImage)
         }
         .onChange(of: selectedPhotoItem) { newItem in
-            guard let newItem = newItem else { return }
+            guard let newItem = newItem, !isLoadingPhoto, !isAnalyzing else { return }
             Task {
                 await loadPhoto(from: newItem)
             }
@@ -463,6 +466,9 @@ struct RoomScannerView: View {
             Task {
                 await analyzeImage(newImage)
             }
+        }
+        .onDisappear {
+            cancelScheduledWork()
         }
     }
 
@@ -524,7 +530,8 @@ struct RoomScannerView: View {
 
                     VStack(spacing: 12) {
                         if isCameraAvailable {
-                            Button(action: {
+                            GuardedButton(action: {
+                                guard !isLoadingPhoto, !isAnalyzing else { return }
                                 showCamera = true
                             }) {
                                 HStack(spacing: 10) {
@@ -545,6 +552,7 @@ struct RoomScannerView: View {
                                 )
                                 .clipShape(RoundedRectangle(cornerRadius: 14))
                             }
+                            .disabled(isLoadingPhoto || isAnalyzing)
                             .accessibilityHint("Double tap to open the camera and take a photo of a room")
                         }
 
@@ -575,6 +583,7 @@ struct RoomScannerView: View {
                             )
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
+                        .disabled(isLoadingPhoto || isAnalyzing)
                         .accessibilityHint("Double tap to choose a photo from your photo library")
                     }
                     .padding(.horizontal, 20)
@@ -684,7 +693,7 @@ struct RoomScannerView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
 
-                    Button(action: {
+                    GuardedButton(action: {
                         resetScanner()
                     }) {
                         Text("Try Again")
@@ -1105,7 +1114,7 @@ struct RoomScannerView: View {
 
     private var actionButtons: some View {
         VStack(spacing: 12) {
-            Button(action: {
+            GuardedButton(action: {
                 resetScanner()
             }) {
                 HStack(spacing: 8) {
@@ -1127,7 +1136,8 @@ struct RoomScannerView: View {
             }
             .accessibilityHint("Double tap to scan another room for earthquake hazards")
 
-            Button(action: {
+            GuardedButton(action: {
+                cancelScheduledWork()
                 withAnimation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.7)) {
                     gameState.currentPhase = .result
                 }
@@ -1151,7 +1161,8 @@ struct RoomScannerView: View {
     // MARK: - Back Button
 
     private var backButton: some View {
-        Button(action: {
+        GuardedButton(action: {
+            cancelScheduledWork()
             withAnimation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.7)) {
                 gameState.currentPhase = .result
             }
@@ -1170,6 +1181,10 @@ struct RoomScannerView: View {
     // MARK: - Logic
 
     private func loadPhoto(from item: PhotosPickerItem) async {
+        guard !isLoadingPhoto, !isAnalyzing else { return }
+        isLoadingPhoto = true
+        defer { isLoadingPhoto = false }
+
         guard let data = try? await item.loadTransferable(type: Data.self),
               let uiImage = UIImage(data: data) else {
             analysisError = "Could not load the selected photo. Please try another image."
@@ -1241,9 +1256,11 @@ struct RoomScannerView: View {
     }
 
     private func resetScanner() {
+        cancelScheduledWork()
         withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.3)) {
             selectedPhotoItem = nil
             selectedImage = nil
+            isLoadingPhoto = false
             isAnalyzing = false
             analysisComplete = false
             analysisError = nil
@@ -1257,6 +1274,9 @@ struct RoomScannerView: View {
     }
 
     private func startResultsAnimation() {
+        cancelScheduledWork()
+        let token = animationToken
+
         if reduceMotion {
             showResults = true
             ringProgress = Double(safetyScore) / 100.0
@@ -1264,23 +1284,40 @@ struct RoomScannerView: View {
             return
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        scheduleAfter(0.2, token: token) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 showResults = true
             }
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        scheduleAfter(0.5, token: token) {
             withAnimation(.easeOut(duration: 1.0)) {
                 ringProgress = Double(safetyScore) / 100.0
             }
             let target = Double(safetyScore)
             let steps = 25
             for i in 0...steps {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) / Double(steps)) {
+                scheduleAfter(Double(i) / Double(steps), token: token) {
                     animatedScore = target * Double(i) / Double(steps)
                 }
             }
         }
+    }
+
+    private func scheduleAfter(_ delay: TimeInterval, token: UUID, action: @escaping @MainActor () -> Void) {
+        let item = DispatchWorkItem {
+            Task { @MainActor in
+                guard animationToken == token else { return }
+                action()
+            }
+        }
+        pendingWorkItems.append(item)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    }
+
+    private func cancelScheduledWork() {
+        animationToken = UUID()
+        pendingWorkItems.forEach { $0.cancel() }
+        pendingWorkItems.removeAll()
     }
 }
